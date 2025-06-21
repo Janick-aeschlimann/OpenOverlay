@@ -13,5 +13,5 @@ Open Source Real Time Collaboration Live Overlay Management Tool
 
 ### Frontend
 
-- Angular
+- React
 - Shadcn UI
