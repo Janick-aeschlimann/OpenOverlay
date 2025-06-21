@@ -9,5 +9,9 @@ Open Source Real Time Collaboration Live Overlay Management Tool
 - nodejs
 - expressjs
 - mysql
+- SuperTokens (auth)
 
 ### Frontend
+
+- Angular
+- Shadcn UI
