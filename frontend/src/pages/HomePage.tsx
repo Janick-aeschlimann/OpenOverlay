@@ -1,10 +1,8 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import Session from "supertokens-auth-react/recipe/session";
-export interface IHomeProps {}
+import Session from "supertokens-web-js/recipe/session";
 
-const Home: React.FC<IHomeProps> = (props) => {
-  const [userId, setUserId] = useState<String>();
+const Home: React.FC = () => {
+  const [userId, setUserId] = useState<string>();
 
   useEffect(() => {
     getUserId();
@@ -14,18 +12,10 @@ const Home: React.FC<IHomeProps> = (props) => {
     setUserId(await Session.getUserId());
   };
 
-  const navigate = useNavigate();
-
-  const logout = async () => {
-    await Session.signOut();
-    navigate("/auth");
-  };
-
   return (
     <>
       <h2>Home</h2>
       <p>{userId}</p>
-      <button onClick={logout}>Logout</button>
     </>
   );
 };

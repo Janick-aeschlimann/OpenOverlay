@@ -9,11 +9,77 @@ import {
 } from "@/components/shadcn/ui/card";
 import { Input } from "@/components/shadcn/ui/input";
 import { Label } from "@/components/shadcn/ui/label";
+import { useState, type FormEvent } from "react";
+import { signIn } from "supertokens-web-js/recipe/emailpassword";
+import { useNavigate } from "react-router-dom";
+import { getAuthorisationURLWithQueryParamsAndSetState } from "supertokens-web-js/recipe/thirdparty";
 
 export function LoginForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
+  const navigate = useNavigate();
+  const [error, setError] = useState<string | null>(null);
+
+  const login = async (e: FormEvent) => {
+    e.preventDefault();
+
+    const email = (document.getElementById("email") as HTMLInputElement).value;
+    const password = (document.getElementById("password") as HTMLInputElement)
+      .value;
+
+    try {
+      const response = await signIn({
+        formFields: [
+          {
+            id: "email",
+            value: email,
+          },
+          {
+            id: "password",
+            value: password,
+          },
+        ],
+      });
+
+      if (response.status === "FIELD_ERROR") {
+        response.formFields.forEach((formField) => {
+          if (formField.id === "email") {
+            setError(formField.error);
+          }
+        });
+      } else if (response.status === "WRONG_CREDENTIALS_ERROR") {
+        setError("Email password combination is incorrect.");
+      } else if (response.status === "SIGN_IN_NOT_ALLOWED") {
+        setError(response.reason);
+      } else {
+        navigate("/");
+      }
+    } catch (err: any) {
+      if (err.isSuperTokensGeneralError === true) {
+        setError(err.message);
+      } else {
+        setError("Oops! Something went wrong.");
+      }
+    }
+  };
+
+  const googleLogin = async () => {
+    try {
+      const authUrl = await getAuthorisationURLWithQueryParamsAndSetState({
+        thirdPartyId: "google",
+        frontendRedirectURI: "http://localhost:3001/auth/callback/google",
+      });
+      window.location.assign(authUrl);
+    } catch (err: any) {
+      if (err.isSuperTokensGeneralError === true) {
+        setError(err.message);
+      } else {
+        setError("Oops! Something went wrong.");
+      }
+    }
+  };
+
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
@@ -22,10 +88,14 @@ export function LoginForm({
           <CardDescription>Login with your Google account</CardDescription>
         </CardHeader>
         <CardContent>
-          <form>
+          <form onSubmit={(e) => login(e)} onChange={() => setError(null)}>
             <div className="grid gap-6">
               <div className="flex flex-col gap-4">
-                <Button variant="outline" className="w-full">
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={googleLogin}
+                >
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                     <path
                       d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z"
@@ -61,7 +131,9 @@ export function LoginForm({
                     </a>
                   </div>
                   <Input id="password" type="password" required />
+                  {error && <span className="text-red-500">{error}</span>}
                 </div>
+
                 <Button type="submit" className="w-full">
                   Login
                 </Button>
