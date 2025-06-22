@@ -2,6 +2,7 @@ const supertokens = require("supertokens-node");
 const Session = require("supertokens-node/recipe/session");
 const EmailPassword = require("supertokens-node/recipe/emailpassword");
 const ThirdParty = require("supertokens-node/recipe/thirdparty");
+const Dashboard = require("supertokens-node/recipe/dashboard");
 
 function initSuperTokens() {
   supertokens.init({
@@ -39,6 +40,7 @@ function initSuperTokens() {
       }),
       EmailPassword.init(), // initializes signin / sign up features
       Session.init(), // initializes session features
+      Dashboard.init(),
     ],
   });
 }
