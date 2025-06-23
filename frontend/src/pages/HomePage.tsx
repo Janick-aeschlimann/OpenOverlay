@@ -1,21 +1,12 @@
-import { useEffect, useState } from "react";
-import Session from "supertokens-web-js/recipe/session";
+import { useAuthStore } from "@/store/auth";
 
 const Home: React.FC = () => {
-  const [userId, setUserId] = useState<string>();
-
-  useEffect(() => {
-    getUserId();
-  }, []);
-
-  const getUserId = async () => {
-    setUserId(await Session.getUserId());
-  };
+  const { user } = useAuthStore();
 
   return (
     <>
       <h2>Home</h2>
-      <p>{userId}</p>
+      <p>{user?.userId}</p>
     </>
   );
 };

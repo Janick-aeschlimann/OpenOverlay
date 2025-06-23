@@ -65,6 +65,8 @@ export function SignUpForm({
   };
 
   const googleLogin = async () => {
+    console.log("test");
+
     try {
       const authUrl = await getAuthorisationURLWithQueryParamsAndSetState({
         thirdPartyId: "google",
@@ -95,6 +97,7 @@ export function SignUpForm({
             <div className="grid gap-6">
               <div className="flex flex-col gap-4">
                 <Button
+                  type="button"
                   variant="outline"
                   className="w-full"
                   onClick={googleLogin}

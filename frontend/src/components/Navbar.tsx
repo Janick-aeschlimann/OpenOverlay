@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import { Button } from "./shadcn/ui/button";
 import {
   NavigationMenu,
@@ -10,6 +9,7 @@ import ThemeToggle from "./ThemeToggle";
 
 import Session from "supertokens-web-js/recipe/session";
 import { useNavigate } from "react-router-dom";
+import { useAuthStore } from "@/store/auth";
 
 interface Menu {
   title: string;
@@ -19,15 +19,7 @@ interface Menu {
 const Navbar: React.FC = () => {
   const menu: Menu[] = [{ title: "Home", url: "/" }];
 
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
-
-  useEffect(() => {
-    const getAuthState = async () => {
-      const authState = await Session.doesSessionExist();
-      setIsLoggedIn(authState);
-    };
-    getAuthState();
-  }, []);
+  const user = useAuthStore((state) => state.user);
 
   const renderMenuItem = (item: Menu) => {
     return (
@@ -46,7 +38,7 @@ const Navbar: React.FC = () => {
 
   const logout = async () => {
     await Session.signOut();
-    navigate("/auth");
+    navigate("/login");
   };
 
   return (
@@ -65,7 +57,7 @@ const Navbar: React.FC = () => {
           </NavigationMenu>
         </div>
         <div className="flex justify-end items-center gap-2 w-sm">
-          {!isLoggedIn && (
+          {!user && (
             <>
               <Button asChild variant="outline" size="sm">
                 <a href="/login">Login</a>
@@ -75,7 +67,7 @@ const Navbar: React.FC = () => {
               </Button>
             </>
           )}
-          {isLoggedIn && (
+          {user && (
             <>
               <Button size={"sm"} className="cursor-pointer" onClick={logout}>
                 Logout

@@ -1,5 +1,5 @@
 import { GalleryVerticalEnd } from "lucide-react";
-import { LoginForm } from "../components/shadcn/login-form";
+import { LoginForm } from "@/components/shadcn/login-form";
 
 const LoginPage: React.FC = () => {
   return (
