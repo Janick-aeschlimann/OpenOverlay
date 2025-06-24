@@ -23,7 +23,6 @@ const GoogleCallback: React.FC = () => {
         } else {
           // sign in successful
         }
-        window.location.replace("/");
       } else if (response.status === "SIGN_IN_UP_NOT_ALLOWED") {
         navigate("/login", { state: { error: response.reason } });
       } else {

@@ -10,9 +10,8 @@ import {
 import { Input } from "@/components/shadcn/ui/input";
 import { Label } from "@/components/shadcn/ui/label";
 import { useState, type FormEvent } from "react";
-import { signUp } from "supertokens-web-js/recipe/emailpassword";
 import { useNavigate } from "react-router-dom";
-import { getAuthorisationURLWithQueryParamsAndSetState } from "supertokens-web-js/recipe/thirdparty";
+import { googleLogin, signup } from "@/services/AuthService";
 
 export function SignUpForm({
   className,
@@ -21,64 +20,31 @@ export function SignUpForm({
   const navigate = useNavigate();
   const [error, setError] = useState<string | null>(null);
 
-  const signUpSubmit = async (e: FormEvent) => {
+  const handleSignUp = async (e: FormEvent) => {
     e.preventDefault();
 
     const email = (document.getElementById("email") as HTMLInputElement).value;
     const password = (document.getElementById("password") as HTMLInputElement)
       .value;
 
-    try {
-      const response = await signUp({
-        formFields: [
-          {
-            id: "email",
-            value: email,
-          },
-          {
-            id: "password",
-            value: password,
-          },
-        ],
-      });
+    const status = await signup(email, password);
 
-      if (response.status === "FIELD_ERROR") {
-        response.formFields.forEach((formField) => {
-          if (formField.id === "email") {
-            setError(formField.error);
-          } else if (formField.id === "password") {
-            setError(formField.error);
-          }
-        });
-      } else if (response.status === "SIGN_UP_NOT_ALLOWED") {
-        setError(response.reason);
-      } else {
-        navigate("/");
-      }
-    } catch (err: any) {
-      if (err.isSuperTokensGeneralError === true) {
-        setError(err.message);
-      } else {
-        setError("Oops! Something went wrong.");
-      }
+    if (status?.success) {
+      navigate("/");
+    } else {
+      setError(status?.error);
     }
   };
 
-  const googleLogin = async () => {
-    console.log("test");
+  const handleGoogleLogin = async () => {
+    const status = await googleLogin();
 
-    try {
-      const authUrl = await getAuthorisationURLWithQueryParamsAndSetState({
-        thirdPartyId: "google",
-        frontendRedirectURI: "http://localhost:3001/auth/callback/google",
-      });
-      window.location.assign(authUrl);
-    } catch (err: any) {
-      if (err.isSuperTokensGeneralError === true) {
-        setError(err.message);
-      } else {
-        setError("Oops! Something went wrong.");
+    if (status.success) {
+      if (status.data?.authUrl) {
+        window.location.assign(status.data.authUrl);
       }
+    } else {
+      setError(status.error);
     }
   };
 
@@ -91,7 +57,7 @@ export function SignUpForm({
         </CardHeader>
         <CardContent>
           <form
-            onSubmit={(e) => signUpSubmit(e)}
+            onSubmit={(e) => handleSignUp(e)}
             onChange={() => setError(null)}
           >
             <div className="grid gap-6">
@@ -100,7 +66,7 @@ export function SignUpForm({
                   type="button"
                   variant="outline"
                   className="w-full"
-                  onClick={googleLogin}
+                  onClick={handleGoogleLogin}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                     <path

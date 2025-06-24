@@ -3,10 +3,10 @@ import { create } from "zustand";
 
 export const useAuthStore = create<{
   user: AuthUser | null;
-  setAuth: (uid: string) => void;
+  setAuth: (user: AuthUser) => void;
   clearAuth: () => void;
 }>((set) => ({
   user: null,
-  setAuth: (uid) => set({ user: { userId: uid, email: "", username: "" } }),
+  setAuth: (user) => set({ user: user }),
   clearAuth: () => set({ user: null }),
 }));

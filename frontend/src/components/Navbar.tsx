@@ -57,24 +57,10 @@ const Navbar: React.FC = () => {
           </NavigationMenu>
         </div>
         <div className="flex justify-end items-center gap-2 w-sm">
-          {!user && (
-            <>
-              <Button asChild variant="outline" size="sm">
-                <a href="/login">Login</a>
-              </Button>
-              <Button asChild size="sm">
-                <a href="/signup">Sign up</a>
-              </Button>
-            </>
-          )}
-          {user && (
-            <>
-              <Button size={"sm"} className="cursor-pointer" onClick={logout}>
-                Logout
-              </Button>
-            </>
-          )}
-
+          <p>{user?.username}</p>
+          <Button size={"sm"} className="cursor-pointer" onClick={logout}>
+            Logout
+          </Button>
           <ThemeToggle />
         </div>
       </nav>

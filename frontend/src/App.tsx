@@ -1,4 +1,4 @@
-import { Route, Routes } from "react-router-dom";
+import { Route, Routes, useNavigate } from "react-router-dom";
 import Home from "./pages/HomePage";
 
 import { ThemeProvider } from "./components/ThemeProvider";
@@ -16,49 +16,63 @@ import { useEffect } from "react";
 import GoogleCallback from "./pages/auth/callback/GoogleCallback";
 import DefaultWrapper from "./components/PageWrapper/DefaultWrapper";
 import ProtectedRoute from "./components/ProtectedRoute";
-
-SuperTokens.init({
-  appInfo: {
-    appName: "OpenOverlay",
-    apiDomain: "http://localhost:3000",
-    apiBasePath: "/auth",
-  },
-  recipeList: [
-    ThirdParty.init(),
-    EmailPassword.init(),
-    Session.init({
-      onHandleEvent: async (event) => {
-        console.log(event);
-        const action = event.action;
-
-        switch (action) {
-          case "SESSION_CREATED": {
-            const userId = await Session.getUserId();
-            console.log(userId);
-            useAuthStore.getState().setAuth(userId);
-            break;
-          }
-          case "SIGN_OUT": {
-            useAuthStore.getState().clearAuth();
-            break;
-          }
-        }
-      },
-    }),
-  ],
-});
+import { getUser } from "./services/AuthService";
+import CreateUserPage from "./pages/auth/CreateUserPage";
 
 function App() {
-  const setAuth = useAuthStore((s) => s.setAuth);
+  const user = useAuthStore().user;
+  const navigate = useNavigate();
+
+  const initSuperTokens = () => {
+    SuperTokens.init({
+      appInfo: {
+        appName: "OpenOverlay",
+        apiDomain: "http://localhost:3000",
+        apiBasePath: "/auth",
+      },
+      recipeList: [
+        ThirdParty.init(),
+        EmailPassword.init(),
+        Session.init({
+          onHandleEvent: async (event) => {
+            const action = event.action;
+            console.log(action);
+            switch (action) {
+              case "SESSION_CREATED": {
+                await getUser(
+                  () => {
+                    navigate("/");
+                  },
+                  () => {
+                    navigate("/auth/user/create");
+                  }
+                );
+                break;
+              }
+              case "SIGN_OUT": {
+                useAuthStore.getState().clearAuth();
+                break;
+              }
+            }
+          },
+        }),
+      ],
+    });
+  };
+
+  initSuperTokens();
 
   useEffect(() => {
-    const getUser = async () => {
-      if (await Session.doesSessionExist()) {
-        const userId = await Session.getUserId();
-        setAuth(userId);
-      }
-    };
-    getUser();
+    if (!user) {
+      getUser(
+        () => {
+          navigate("/");
+        },
+        () => {
+          navigate("/auth/user/create");
+        }
+      );
+    }
   }, []);
 
   return (
@@ -81,6 +95,14 @@ function App() {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/signup" element={<SignUpPage />} />
             <Route path="/auth/callback/google" element={<GoogleCallback />} />
+            <Route
+              path="/auth/user/create"
+              element={
+                <ProtectedRoute>
+                  <CreateUserPage />
+                </ProtectedRoute>
+              }
+            />
           </Route>
         </Routes>
       </ThemeProvider>

@@ -30,13 +30,13 @@ const createUser = async (req, res) => {
       if (result.affectedRows == 1) {
         res.status(201).json({ message: "User Created successfully" });
       } else {
-        res.status(400).json({ error: "something went wrong" });
+        res.status(400).json({ message: "something went wrong" });
       }
     } catch (error) {
-      res.status(400).json({ error: error.message });
+      res.status(400).json({ message: error.message });
     }
   } else {
-    res.status(400).send("please specify username");
+    res.status(400).json({ message: "please specify username" });
   }
 };
 
@@ -46,21 +46,17 @@ const getUsers = async (req, res) => {
     const users = await Promise.all(result.map(async (user) => await getUserData(user.userId)));
     res.json({ results: users });
   } catch (error) {
-    res.status(400).json({ error: error });
+    res.status(400).json({ message: error });
   }
 };
 
 const getOwnUser = async (req, res) => {
-  try {
-    let userId = req.session.getUserId();
-    const [result] = await db.query("SELECT * FROM user WHERE userId = ?", [userId]);
-    if (result[0]) {
-      res.json(result[0]);
-    } else {
-      res.status(404).json({ error: "User not found" });
-    }
-  } catch (error) {
-    res.status(400).json({ error: error });
+  let userId = req.session.getUserId();
+  const user = await getUserData(userId);
+  if (user) {
+    res.json(user);
+  } else {
+    res.status(404).json({ message: "User not found" });
   }
 };
 
