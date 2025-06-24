@@ -23,32 +23,20 @@ const GoogleCallback: React.FC = () => {
         } else {
           // sign in successful
         }
-        navigate("/");
+        window.location.replace("/");
       } else if (response.status === "SIGN_IN_UP_NOT_ALLOWED") {
-        // the reason string is a user friendly message
-        // about what went wrong. It can also contain a support code which users
-        // can tell you so you know why their sign in / up was not allowed.
-        window.alert(response.reason);
+        navigate("/login", { state: { error: response.reason } });
       } else {
-        // SuperTokens requires that the third party provider
-        // gives an email for the user. If that's not the case, sign up / in
-        // will fail.
-
-        // As a hack to solve this, you can override the backend functions to create a fake email for the user.
-
-        window.alert(
-          "No email provided by social login. Please use another form of login"
-        );
-        // redirect back to login page
-        navigate("/login");
+        navigate("/login", {
+          state: {
+            error:
+              "No email provided by social login. Please use another form of login",
+          },
+        });
       }
     } catch (err: any) {
-      if (err.isSuperTokensGeneralError === true) {
-        // this may be a custom error message sent from the API by you.
-        window.alert(err.message);
-      } else {
-        window.alert("Oops! Something went wrong.");
-      }
+      console.error(err);
+      navigate("/login", { state: { error: "Something went wrong!" } });
     }
   };
   return <></>;

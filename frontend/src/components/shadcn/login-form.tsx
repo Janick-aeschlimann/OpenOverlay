@@ -9,9 +9,9 @@ import {
 } from "@/components/shadcn/ui/card";
 import { Input } from "@/components/shadcn/ui/input";
 import { Label } from "@/components/shadcn/ui/label";
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { signIn } from "supertokens-web-js/recipe/emailpassword";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { getAuthorisationURLWithQueryParamsAndSetState } from "supertokens-web-js/recipe/thirdparty";
 
 export function LoginForm({
@@ -20,6 +20,14 @@ export function LoginForm({
 }: React.ComponentProps<"div">) {
   const navigate = useNavigate();
   const [error, setError] = useState<string | null>(null);
+  const location = useLocation();
+  const errorCallback = location.state?.error || null;
+
+  useEffect(() => {
+    if (errorCallback) {
+      setError(errorCallback);
+    }
+  }, []);
 
   const login = async (e: FormEvent) => {
     e.preventDefault();

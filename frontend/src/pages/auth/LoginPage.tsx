@@ -1,7 +1,21 @@
 import { GalleryVerticalEnd } from "lucide-react";
 import { LoginForm } from "@/components/shadcn/login-form";
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import Session from "supertokens-web-js/recipe/session";
 
 const LoginPage: React.FC = () => {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const checkSession = async () => {
+      if (await Session.doesSessionExist()) {
+        navigate("/");
+      }
+    };
+    checkSession();
+  }, []);
+
   return (
     <>
       <div className="bg-muted flex h-full flex-col items-center justify-center gap-6 p-6 md:p-10">
