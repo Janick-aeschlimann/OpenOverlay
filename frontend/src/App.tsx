@@ -4,7 +4,6 @@ import Home from "./pages/HomePage";
 import { ThemeProvider } from "./components/ThemeProvider";
 import LoginPage from "./pages/auth/LoginPage";
 import SignUpPage from "./pages/auth/SignUpPage";
-import NavbarWrapper from "./components/PageWrapper/NavbarWrapper";
 
 import SuperTokens from "supertokens-web-js";
 import Session from "supertokens-web-js/recipe/session";
@@ -18,6 +17,7 @@ import DefaultWrapper from "./components/PageWrapper/DefaultWrapper";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { getUser } from "./services/AuthService";
 import CreateUserPage from "./pages/auth/CreateUserPage";
+import SidebarWrapper from "./components/PageWrapper/SidebarWrapper";
 
 function App() {
   const user = useAuthStore().user;
@@ -73,7 +73,7 @@ function App() {
       <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
         <Routes>
           {/* NavbarWrapper */}
-          <Route element={<NavbarWrapper />}>
+          <Route element={<SidebarWrapper />}>
             <Route
               path="/"
               element={
