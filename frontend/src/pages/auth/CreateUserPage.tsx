@@ -10,10 +10,24 @@ import {
 import { Input } from "@/components/shadcn/ui/input";
 import { Label } from "@/components/shadcn/ui/label";
 import { setUsername } from "@/services/AuthService";
+import { useAuthStore } from "@/store/auth";
 import { GalleryVerticalEnd } from "lucide-react";
-import { type FormEvent } from "react";
+import { useEffect, type FormEvent } from "react";
+import { useNavigate } from "react-router-dom";
 
 const CreateUserPage: React.FC = () => {
+  const navigate = useNavigate();
+  const user = useAuthStore().user;
+
+  useEffect(() => {
+    const checkSession = async () => {
+      if (user) {
+        navigate("/");
+      }
+    };
+    checkSession();
+  });
+
   const handleSetUsername = (e: FormEvent) => {
     e.preventDefault();
     const username = (document.getElementById("username") as HTMLInputElement)
@@ -34,8 +48,8 @@ const CreateUserPage: React.FC = () => {
             </div>
             OpenOverlay
           </a>
-          <Card className="w-full max-w-sm">
-            <form onSubmit={handleSetUsername}>
+          <form onSubmit={handleSetUsername}>
+            <Card className="w-full max-w-sm">
               <CardHeader>
                 <CardTitle>Set Username</CardTitle>
                 <CardDescription>Enter your Username below</CardDescription>
@@ -58,8 +72,8 @@ const CreateUserPage: React.FC = () => {
                   Set Username
                 </Button>
               </CardFooter>
-            </form>
-          </Card>
+            </Card>
+          </form>
         </div>
       </div>
     </>

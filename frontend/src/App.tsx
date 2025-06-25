@@ -39,14 +39,12 @@ function App() {
             console.log(action);
             switch (action) {
               case "SESSION_CREATED": {
-                await getUser(
-                  () => {
-                    navigate("/");
-                  },
-                  () => {
-                    navigate("/auth/user/create");
-                  }
-                );
+                const user = await getUser(() => {
+                  navigate("/auth/user/create");
+                });
+                if (user) {
+                  navigate("/");
+                }
                 break;
               }
               case "SIGN_OUT": {
@@ -64,14 +62,9 @@ function App() {
 
   useEffect(() => {
     if (!user) {
-      getUser(
-        () => {
-          navigate("/");
-        },
-        () => {
-          navigate("/auth/user/create");
-        }
-      );
+      getUser(() => {
+        navigate("/auth/user/create");
+      });
     }
   }, []);
 

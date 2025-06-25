@@ -70,14 +70,9 @@ export const login = async (email: string, password: string) => {
     } else if (response.status === "SIGN_IN_NOT_ALLOWED") {
       return { success: false, error: response.reason };
     } else {
-      getUser(
-        () => {
-          window.location.replace("/");
-        },
-        () => {
-          window.location.replace("/auth/user/create");
-        }
-      );
+      getUser(() => {
+        window.location.replace("/auth/user/create");
+      });
       return { success: true };
     }
   } catch (err: any) {
@@ -105,32 +100,27 @@ export const googleLogin = async () => {
   }
 };
 
-export const getUser = async (exists: () => void, notExists: () => void) => {
+export const getUser = async (notExists: () => void) => {
   const userId = await Session.getUserId();
   if (userId) {
     const response = await GetAPI("/user/me");
     if (response.success) {
       useAuthStore.getState().setAuth(response.data);
-      exists();
+      return true;
     } else {
       notExists();
     }
   } else {
-    return;
+    return false;
   }
 };
 
 export const setUsername = async (username: string) => {
   const response = await PostAPI("/user/create", { username: username });
   if (response.success) {
-    getUser(
-      () => {
-        window.location.replace("/");
-      },
-      () => {
-        window.location.replace("/auth/user/create");
-      }
-    );
+    getUser(() => {
+      window.location.replace("/auth/user/create");
+    });
   } else {
     console.log(response.error);
   }
