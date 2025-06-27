@@ -1,5 +1,4 @@
-import { Route, Routes, useNavigate } from "react-router-dom";
-import Home from "./pages/HomePage";
+import { Navigate, Route, Routes, useNavigate } from "react-router-dom";
 
 import { ThemeProvider } from "./components/ThemeProvider";
 import LoginPage from "./pages/auth/LoginPage";
@@ -14,10 +13,12 @@ import { useAuthStore } from "@/store/auth";
 import { useEffect } from "react";
 import GoogleCallback from "./pages/auth/callback/GoogleCallback";
 import DefaultWrapper from "./components/PageWrapper/DefaultWrapper";
-import ProtectedRoute from "./components/ProtectedRoute";
 import { getUser } from "./services/AuthService";
 import CreateUserPage from "./pages/auth/CreateUserPage";
-import SidebarWrapper from "./components/PageWrapper/SidebarWrapper";
+import ProtectedRoute from "./components/Navigation/ProtectedRoute";
+import Sidebar from "./components/Navigation/Sidebar";
+import Dashboard from "./pages/main/DashboardPage";
+import Workspaces from "./pages/main/WorkspacesPage";
 
 function App() {
   const user = useAuthStore().user;
@@ -73,16 +74,37 @@ function App() {
       <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
         <Routes>
           {/* NavbarWrapper */}
-          <Route element={<SidebarWrapper />}>
-            <Route
-              path="/"
-              element={
+          <Route path="/" element={<Navigate to={"/dashboard"} />} />
+          <Route
+            path="/dashboard"
+            element={
+              <Sidebar title="Dashboard">
                 <ProtectedRoute>
-                  <Home />
+                  <Dashboard />
                 </ProtectedRoute>
-              }
-            />
-          </Route>
+              </Sidebar>
+            }
+          />
+          <Route
+            path="/workspaces"
+            element={
+              <Sidebar title="Workspaces">
+                <ProtectedRoute>
+                  <Workspaces />
+                </ProtectedRoute>
+              </Sidebar>
+            }
+          />
+          <Route
+            path="*"
+            element={
+              <Sidebar title="Workspaces">
+                <ProtectedRoute>
+                  <Workspaces />
+                </ProtectedRoute>
+              </Sidebar>
+            }
+          />
           {/* DefaultWrapper */}
           <Route element={<DefaultWrapper />}>
             <Route path="/login" element={<LoginPage />} />

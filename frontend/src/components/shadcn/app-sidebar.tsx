@@ -1,149 +1,120 @@
 import * as React from "react";
 import {
   AudioWaveform,
-  BookOpen,
-  Bot,
-  Command,
-  Frame,
   GalleryVerticalEnd,
-  Map,
-  PieChart,
-  Settings2,
-  SquareTerminal,
+  Home,
+  LayoutGrid,
+  Settings,
+  Users,
 } from "lucide-react";
 
-import { TeamSwitcher } from "@/components/shadcn/team-switcher";
+import { WorkspaceSwitcher } from "@/components/shadcn/workspace-switcher";
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
   SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
   SidebarRail,
 } from "@/components/shadcn/ui/sidebar";
+import { Separator } from "./ui/separator";
+import { Link, useLocation } from "react-router-dom";
 
-// This is sample data.
 const data = {
-  user: {
-    name: "shadcn",
-    email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
-  },
-  teams: [
+  workspaces: [
     {
-      name: "Acme Inc",
+      name: "Test Workspace",
       logo: GalleryVerticalEnd,
-      plan: "Enterprise",
     },
     {
-      name: "Acme Corp.",
+      name: "Test",
       logo: AudioWaveform,
-      plan: "Startup",
-    },
-    {
-      name: "Evil Corp.",
-      logo: Command,
-      plan: "Free",
     },
   ],
-  navMain: [
+  workspaceNav: [
     {
-      title: "Dashboard",
-      url: "#",
-      icon: SquareTerminal,
-      isActive: true,
+      name: "Overlays",
+      url: "workspace/overlays",
+      icon: GalleryVerticalEnd,
     },
     {
-      title: "Models",
-      url: "#",
-      icon: Bot,
-      items: [
-        {
-          title: "Genesis",
-          url: "#",
-        },
-        {
-          title: "Explorer",
-          url: "#",
-        },
-        {
-          title: "Quantum",
-          url: "#",
-        },
-      ],
+      name: "Members",
+      url: "workspace/members",
+      icon: Users,
     },
     {
-      title: "Documentation",
-      url: "#",
-      icon: BookOpen,
-      items: [
-        {
-          title: "Introduction",
-          url: "#",
-        },
-        {
-          title: "Get Started",
-          url: "#",
-        },
-        {
-          title: "Tutorials",
-          url: "#",
-        },
-        {
-          title: "Changelog",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Settings",
-      url: "#",
-      icon: Settings2,
-      items: [
-        {
-          title: "General",
-          url: "#",
-        },
-        {
-          title: "Team",
-          url: "#",
-        },
-        {
-          title: "Billing",
-          url: "#",
-        },
-        {
-          title: "Limits",
-          url: "#",
-        },
-      ],
+      name: "Settings",
+      url: "workspace/settings",
+      icon: Settings,
     },
   ],
-  projects: [
+  mainNav: [
     {
-      name: "Design Engineering",
-      url: "#",
-      icon: Frame,
+      name: "Dashboard",
+      url: "/dashboard",
+      icon: Home,
     },
     {
-      name: "Sales & Marketing",
-      url: "#",
-      icon: PieChart,
-    },
-    {
-      name: "Travel",
-      url: "#",
-      icon: Map,
+      name: "Workspaces",
+      url: "/workspaces",
+      icon: LayoutGrid,
     },
   ],
 };
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const location = useLocation();
+  const workspace = location.pathname.startsWith("/workspace/");
+
   return (
     <Sidebar collapsible="icon" {...props}>
-      <SidebarHeader>
-        <TeamSwitcher teams={data.teams} />
+      <SidebarHeader className="pt-4 mb-1">
+        <WorkspaceSwitcher workspaces={data.workspaces} />
       </SidebarHeader>
-      <SidebarContent></SidebarContent>
+      <SidebarContent>
+        {workspace && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Workspace</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {data.workspaceNav.map((item) => (
+                  <SidebarMenuItem className="select-none cursor-pointer">
+                    <SidebarMenuButton asChild>
+                      <Link to={item.url}>
+                        <item.icon />
+                        <span>{item.name}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+
+        <SidebarGroup className={workspace ? "mt-auto" : ""}>
+          <Separator className="mb-4" />
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {data.mainNav.map((item) => (
+                <SidebarMenuItem className="select-none cursor-pointer">
+                  <SidebarMenuButton asChild>
+                    <Link to={item.url}>
+                      <item.icon />
+                      <span>{item.name}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </SidebarContent>
       <SidebarFooter></SidebarFooter>
       <SidebarRail />
     </Sidebar>
