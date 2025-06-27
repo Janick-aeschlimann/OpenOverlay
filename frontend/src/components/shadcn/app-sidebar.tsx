@@ -1,6 +1,5 @@
 import * as React from "react";
 import {
-  AudioWaveform,
   GalleryVerticalEnd,
   Home,
   LayoutGrid,
@@ -26,16 +25,6 @@ import { Separator } from "./ui/separator";
 import { Link, useLocation } from "react-router-dom";
 
 const data = {
-  workspaces: [
-    {
-      name: "Test Workspace",
-      logo: GalleryVerticalEnd,
-    },
-    {
-      name: "Test",
-      logo: AudioWaveform,
-    },
-  ],
   workspaceNav: [
     {
       name: "Overlays",
@@ -74,7 +63,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader className="pt-4 mb-1">
-        <WorkspaceSwitcher workspaces={data.workspaces} />
+        <WorkspaceSwitcher />
       </SidebarHeader>
       <SidebarContent>
         {workspace && (

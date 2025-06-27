@@ -5,3 +5,10 @@ export interface AuthUser {
   profile_picture: string;
   created_at: Date;
 }
+
+export interface Workspace {
+  id: number;
+  name: string;
+  slug: string;
+  logo: React.ElementType;
+}

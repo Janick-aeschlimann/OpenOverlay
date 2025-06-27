@@ -16,17 +16,24 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/shadcn/ui/sidebar";
+import { useWorkspaceStore } from "@/store/workspace";
 
-export function WorkspaceSwitcher({
-  workspaces: workspaces,
-}: {
-  workspaces: {
-    name: string;
-    logo: React.ElementType;
-  }[];
-}) {
+export function WorkspaceSwitcher() {
   const { isMobile } = useSidebar();
-  const [activeWorkspace, setActiveWorkspace] = React.useState(workspaces[0]);
+  const {
+    activeWorkspace,
+    workspaces,
+    setWorkspace,
+    fetchWorkspaces,
+    getLastWorkspace,
+  } = useWorkspaceStore();
+  React.useEffect(() => {
+    const initWorkspace = async () => {
+      await fetchWorkspaces();
+      getLastWorkspace();
+    };
+    initWorkspace();
+  }, []);
 
   return (
     <SidebarMenu>
@@ -78,7 +85,7 @@ export function WorkspaceSwitcher({
             {workspaces.map((workspace, index) => (
               <DropdownMenuItem
                 key={workspace.name}
-                onClick={() => setActiveWorkspace(workspace)}
+                onClick={() => setWorkspace(workspace)}
                 className="gap-2 p-2"
               >
                 <div className="flex size-6 items-center justify-center rounded-md border">
