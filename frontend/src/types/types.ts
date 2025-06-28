@@ -7,8 +7,10 @@ export interface AuthUser {
 }
 
 export interface Workspace {
-  id: number;
+  workspaceId: number;
   name: string;
   slug: string;
-  logo: React.ElementType;
+  logo: string | null;
+  ownerId: string;
+  access: string;
 }

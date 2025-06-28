@@ -22,43 +22,43 @@ import {
   SidebarRail,
 } from "@/components/shadcn/ui/sidebar";
 import { Separator } from "./ui/separator";
-import { Link, useLocation } from "react-router-dom";
-
-const data = {
-  workspaceNav: [
-    {
-      name: "Overlays",
-      url: "workspace/overlays",
-      icon: GalleryVerticalEnd,
-    },
-    {
-      name: "Members",
-      url: "workspace/members",
-      icon: Users,
-    },
-    {
-      name: "Settings",
-      url: "workspace/settings",
-      icon: Settings,
-    },
-  ],
-  mainNav: [
-    {
-      name: "Dashboard",
-      url: "/dashboard",
-      icon: Home,
-    },
-    {
-      name: "Workspaces",
-      url: "/workspaces",
-      icon: LayoutGrid,
-    },
-  ],
-};
+import { Link } from "react-router-dom";
+import { useWorkspaceStore } from "@/store/workspace";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const location = useLocation();
-  const workspace = location.pathname.startsWith("/workspace/");
+  const { activeWorkspace } = useWorkspaceStore();
+
+  const data = {
+    workspaceNav: [
+      {
+        name: "Overlays",
+        url: `/workspace/${activeWorkspace?.slug}/overlays`,
+        icon: GalleryVerticalEnd,
+      },
+      {
+        name: "Members",
+        url: `/workspace/${activeWorkspace?.slug}/members`,
+        icon: Users,
+      },
+      {
+        name: "Settings",
+        url: `/workspace/${activeWorkspace?.slug}/settings`,
+        icon: Settings,
+      },
+    ],
+    mainNav: [
+      {
+        name: "Dashboard",
+        url: "/dashboard",
+        icon: Home,
+      },
+      {
+        name: "Workspaces",
+        url: "/workspaces",
+        icon: LayoutGrid,
+      },
+    ],
+  };
 
   return (
     <Sidebar collapsible="icon" {...props}>
@@ -66,7 +66,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <WorkspaceSwitcher />
       </SidebarHeader>
       <SidebarContent>
-        {workspace && (
+        {activeWorkspace && (
           <SidebarGroup>
             <SidebarGroupLabel>Workspace</SidebarGroupLabel>
             <SidebarGroupContent>
@@ -86,7 +86,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </SidebarGroup>
         )}
 
-        <SidebarGroup className={workspace ? "mt-auto" : ""}>
+        <SidebarGroup className={activeWorkspace ? "mt-auto" : ""}>
           <Separator className="mb-4" />
           <SidebarGroupContent>
             <SidebarMenu>

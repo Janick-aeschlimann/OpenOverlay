@@ -19,6 +19,8 @@ import ProtectedRoute from "./components/Navigation/ProtectedRoute";
 import Sidebar from "./components/Navigation/Sidebar";
 import Dashboard from "./pages/main/DashboardPage";
 import Workspaces from "./pages/main/WorkspacesPage";
+import WorkspaceOverview from "./pages/workspace/WorkspaceOverviewPage";
+import CreateWorkspace from "./pages/workspace/CreateWorkspacePage";
 
 function App() {
   const user = useAuthStore().user;
@@ -96,15 +98,16 @@ function App() {
             }
           />
           <Route
-            path="*"
+            path="/workspace/:slug"
             element={
               <Sidebar title="Workspaces">
                 <ProtectedRoute>
-                  <Workspaces />
+                  <WorkspaceOverview />
                 </ProtectedRoute>
               </Sidebar>
             }
           />
+
           {/* DefaultWrapper */}
           <Route element={<DefaultWrapper />}>
             <Route path="/login" element={<LoginPage />} />
@@ -115,6 +118,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <CreateUserPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/workspace/new"
+              element={
+                <ProtectedRoute>
+                  <CreateWorkspace />
                 </ProtectedRoute>
               }
             />

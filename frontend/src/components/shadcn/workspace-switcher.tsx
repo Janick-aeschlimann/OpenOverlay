@@ -1,5 +1,4 @@
-import * as React from "react";
-import { Ban, ChevronsUpDown, Plus } from "lucide-react";
+import { Ban, ChevronsUpDown, GalleryVerticalEnd, Plus } from "lucide-react";
 
 import {
   DropdownMenu,
@@ -17,6 +16,8 @@ import {
   useSidebar,
 } from "@/components/shadcn/ui/sidebar";
 import { useWorkspaceStore } from "@/store/workspace";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 
 export function WorkspaceSwitcher() {
   const { isMobile } = useSidebar();
@@ -24,16 +25,31 @@ export function WorkspaceSwitcher() {
     activeWorkspace,
     workspaces,
     setWorkspace,
+    setWorkspaceSlug,
     fetchWorkspaces,
     getLastWorkspace,
   } = useWorkspaceStore();
-  React.useEffect(() => {
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  useEffect(() => {
     const initWorkspace = async () => {
       await fetchWorkspaces();
-      getLastWorkspace();
+      if (location.pathname.startsWith("/workspace/")) {
+        setWorkspaceSlug(location.pathname.split("/")[2]);
+      } else {
+        getLastWorkspace();
+      }
     };
     initWorkspace();
   }, []);
+
+  useEffect(() => {
+    console.log(activeWorkspace);
+    if (activeWorkspace) {
+      navigate(`/workspace/${activeWorkspace?.slug}`);
+    }
+  }, [activeWorkspace]);
 
   return (
     <SidebarMenu>
@@ -46,7 +62,7 @@ export function WorkspaceSwitcher() {
                 className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
               >
                 <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
-                  <activeWorkspace.logo className="size-4" />
+                  <GalleryVerticalEnd className="size-4" />
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-medium">
@@ -89,14 +105,17 @@ export function WorkspaceSwitcher() {
                 className="gap-2 p-2"
               >
                 <div className="flex size-6 items-center justify-center rounded-md border">
-                  <workspace.logo className="size-3.5 shrink-0" />
+                  <GalleryVerticalEnd className="size-3.5 shrink-0" />
                 </div>
                 {workspace.name}
                 <DropdownMenuShortcut>⌘{index + 1}</DropdownMenuShortcut>
               </DropdownMenuItem>
             ))}
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="gap-2 p-2">
+            <DropdownMenuItem
+              onClick={() => navigate("/workspace/new")}
+              className="gap-2 p-2"
+            >
               <div className="flex size-6 items-center justify-center rounded-md border bg-transparent">
                 <Plus className="size-4" />
               </div>
