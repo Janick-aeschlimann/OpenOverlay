@@ -32,3 +32,12 @@ CREATE TABLE `role_permission` (
 	PRIMARY KEY(`roleId`, `permission_key`),
     FOREIGN KEY(`roleId`) REFERENCES `workspace_role`(`roleId`)
 );
+
+CREATE TABLE `workspace_access` (
+	`accessId` INTEGER NOT NULL AUTO_INCREMENT UNIQUE,
+	`roleId` INTEGER NOT NULL,
+	`userId` VARCHAR(255) NOT NULL,
+	PRIMARY KEY(`accessId`),
+	Foreign Key (roleId) REFERENCES workspace_role(roleId),
+	Foreign Key (userId) REFERENCES user(userId)
+);
