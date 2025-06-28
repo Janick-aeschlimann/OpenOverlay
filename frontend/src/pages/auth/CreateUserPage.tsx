@@ -1,3 +1,4 @@
+import ProfilePictureChange from "@/components/ProfilePictureChange";
 import { Button } from "@/components/shadcn/ui/button";
 import {
   Card,
@@ -32,7 +33,17 @@ const CreateUserPage: React.FC = () => {
     e.preventDefault();
     const username = (document.getElementById("username") as HTMLInputElement)
       .value;
-    setUsername(username);
+    const profilePicture = (
+      document.getElementById("profile_picture") as HTMLInputElement
+    ).files?.[0];
+
+    const formData = new FormData();
+    if (profilePicture) {
+      formData.append("profile_picture", profilePicture);
+    }
+    formData.append("username", username);
+
+    setUsername(formData);
   };
 
   return (
@@ -56,6 +67,10 @@ const CreateUserPage: React.FC = () => {
               </CardHeader>
               <CardContent>
                 <div className="flex flex-col gap-6">
+                  <div className="flex flex-col gap-2">
+                    <Label>Profile Picture</Label>
+                    <ProfilePictureChange id="profile_picture" />
+                  </div>
                   <div className="grid gap-2">
                     <Label htmlFor="username">Username</Label>
                     <Input

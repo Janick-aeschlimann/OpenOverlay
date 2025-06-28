@@ -52,8 +52,12 @@ const Navbar: React.FC<INavbarProps> = (props) => {
             <DropdownMenuTrigger>
               <div className="cursor-pointer peer/menu-button flex w-full items-center gap-2 overflow-hidden rounded-md py-0 px-3 text-left outline-hidden ring-sidebar-ring transition-[width,height,padding] focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-data-[sidebar=menu-action]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:size-8! [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground h-11 text-sm group-data-[collapsible=icon]:p-0! data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground">
                 <Avatar>
-                  <AvatarImage src="https://github.com/shadcn.png" />
-                  <AvatarFallback>{user?.username[0]}</AvatarFallback>
+                  <AvatarImage
+                    src={`http://localhost:3000/uploads/profile-pictures/${user?.profile_picture}`}
+                  />
+                  <AvatarFallback className="bg-blue-500">
+                    {user?.username[0]}
+                  </AvatarFallback>
                 </Avatar>
                 <h1 className="select-none font-semibold">{user?.username}</h1>
               </div>

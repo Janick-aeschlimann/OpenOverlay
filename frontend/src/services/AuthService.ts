@@ -1,7 +1,7 @@
 import { signIn, signUp } from "supertokens-web-js/recipe/emailpassword";
 import { getAuthorisationURLWithQueryParamsAndSetState } from "supertokens-web-js/recipe/thirdparty";
 import Session from "supertokens-web-js/recipe/session";
-import { GetAPI, PostAPI } from "./RequestService";
+import { GetAPI, PostFormAPI } from "./RequestService";
 import { useAuthStore } from "@/store/auth";
 
 export const signup = async (email: string, password: string) => {
@@ -115,8 +115,8 @@ export const getUser = async (notExists: () => void) => {
   }
 };
 
-export const setUsername = async (username: string) => {
-  const response = await PostAPI("/user/create", { username: username });
+export const setUsername = async (formData: FormData) => {
+  const response = await PostFormAPI("/user/create", formData);
   if (response.success) {
     getUser(() => {
       window.location.replace("/auth/user/create");

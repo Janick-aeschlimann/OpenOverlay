@@ -1,6 +1,9 @@
 const db = require("./db");
 const supertokens = require("supertokens-node");
 
+const fs = require("fs");
+const path = require("path");
+
 const getUserData = async (userId) => {
   const [result] = await db.query("SELECT * FROM user WHERE userId = ?", [userId]);
 
@@ -20,24 +23,41 @@ const getUserData = async (userId) => {
 
 const createUser = async (req, res) => {
   const { username } = req?.body;
-  let userId = req.session.getUserId();
+  const userId = req.session.getUserId();
+  const filename = req.file?.filename || null;
+
   if (username) {
-    try {
-      const [result] = await db.query(
-        "INSERT INTO user (userId, username, created_at) Values (?, ?, ?)",
-        [userId, username, new Date()]
-      );
-      if (result.affectedRows == 1) {
-        res.status(201).json({ message: "User Created successfully" });
-      } else {
-        res.status(400).json({ message: "something went wrong" });
+    const [userResult] = await db.query("SELECT * FROM user WHERE userId = ?", [userId]);
+    if (userResult[0]) {
+      if (filename) {
+        deleteUpload(filename);
       }
-    } catch (error) {
-      res.status(400).json({ message: error.message });
+      res.status(409).json({ message: "Userprofile already exists" });
+    } else {
+      const [usernameResult] = await db.query("SELECT * FROM user WHERE username = ?", [username]);
+      if (usernameResult[0]) {
+        if (filename) {
+          deleteUpload(filename);
+        }
+        res.status(409).json({ message: "username taken" });
+      } else {
+        await db.query(
+          "INSERT INTO user (userId, username, created_at, profile_picture) Values (?, ?, ?, ?)",
+          [userId, username, new Date(), filename]
+        );
+        res.status(201).json({ message: "User Created successfully" });
+      }
     }
   } else {
-    res.status(400).json({ message: "please specify username" });
+    res.status(400).json({ message: "Required Fields missing: { username }" });
   }
+};
+
+const deleteUpload = (filename) => {
+  const fullPath = path.join(__dirname, "../..", "uploads", "profile-pictures", filename);
+  fs.unlink(fullPath, (err) => {
+    if (err) console.error("Failed to delete file:", err);
+  });
 };
 
 const getUsers = async (req, res) => {
