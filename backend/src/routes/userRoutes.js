@@ -1,13 +1,13 @@
-const express = require("express");
+import express from "express";
 const router = express.Router();
 
-const { verifySession } = require("supertokens-node/recipe/session/framework/express");
+import { verifySession } from "supertokens-node/recipe/session/framework/express";
 
-const { createUser, getUsers, getOwnUser } = require("../controllers/userController");
-const { uploadProfilePicture } = require("../middlewares/multer");
+import { createUser, getUsers, getOwnUser } from "../controllers/userController.js";
+import { uploadProfilePicture } from "../middlewares/multer.js";
 
 router.get("/", verifySession(), getUsers);
 router.get("/me", verifySession(), getOwnUser);
 router.post("/create", verifySession(), uploadProfilePicture.single("profile_picture"), createUser);
 
-module.exports = router;
+export default router;

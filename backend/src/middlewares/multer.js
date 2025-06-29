@@ -1,6 +1,6 @@
-const multer = require("multer");
-const path = require("path");
-const fs = require("fs");
+import multer from "multer";
+import fs from "fs";
+import path from "path";
 
 const allowedMimeTypes = ["image/jpeg", "image/png", "image/webp"];
 
@@ -35,7 +35,5 @@ function createMulterConfig(folderName) {
   });
 }
 
-module.exports = {
-  uploadProfilePicture: createMulterConfig("profile-pictures"),
-  uploadWorkspaceLogo: createMulterConfig("workspace-logos"),
-};
+export const uploadProfilePicture = createMulterConfig("profile-pictures");
+export const uploadWorkspaceLogo = createMulterConfig("workspace-logos");

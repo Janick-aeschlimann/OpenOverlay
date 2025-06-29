@@ -21,6 +21,7 @@ import Dashboard from "./pages/main/DashboardPage";
 import Workspaces from "./pages/main/WorkspacesPage";
 import WorkspaceOverview from "./pages/workspace/WorkspaceOverviewPage";
 import CreateWorkspace from "./pages/workspace/CreateWorkspacePage";
+import Editor from "./pages/Editor/EditorPage";
 
 function App() {
   const user = useAuthStore().user;
@@ -126,6 +127,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <CreateWorkspace />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/canvas"
+              element={
+                <ProtectedRoute>
+                  <Editor />
                 </ProtectedRoute>
               }
             />

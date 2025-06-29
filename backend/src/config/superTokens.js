@@ -1,10 +1,10 @@
-const supertokens = require("supertokens-node");
-const Session = require("supertokens-node/recipe/session");
-const EmailPassword = require("supertokens-node/recipe/emailpassword");
-const ThirdParty = require("supertokens-node/recipe/thirdparty");
-const Dashboard = require("supertokens-node/recipe/dashboard");
+import supertokens from "supertokens-node";
+import Session from "supertokens-node/recipe/session";
+import EmailPassword from "supertokens-node/recipe/emailpassword";
+import ThirdParty from "supertokens-node/recipe/thirdparty";
+import Dashboard from "supertokens-node/recipe/dashboard";
 
-function initSuperTokens() {
+export function initSuperTokens() {
   supertokens.init({
     framework: "express",
     supertokens: {
@@ -44,5 +44,3 @@ function initSuperTokens() {
     ],
   });
 }
-
-module.exports = { initSuperTokens };

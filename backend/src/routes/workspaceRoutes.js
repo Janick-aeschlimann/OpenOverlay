@@ -1,15 +1,15 @@
-const express = require("express");
+import express from "express";
 const router = express.Router();
 
-const { verifySession } = require("supertokens-node/recipe/session/framework/express");
+import { verifySession } from "supertokens-node/recipe/session/framework/express";
 
-const {
+import {
   getWorkspaceWithId,
   getWorkspaceWithSlug,
   getWorkspaces,
   getOwnedWorkspaces,
   createWorkspace,
-} = require("../controllers/workspaceController");
+} from "../controllers/workspaceController.js";
 
 router.get("/", verifySession(), getWorkspaces);
 router.get("/owned", verifySession(), getOwnedWorkspaces);
@@ -17,4 +17,4 @@ router.get("/id/:workspaceId", verifySession(), getWorkspaceWithId);
 router.get("/slug/:slug", verifySession(), getWorkspaceWithSlug);
 router.post("/create", verifySession(), createWorkspace);
 
-module.exports = router;
+export default router;

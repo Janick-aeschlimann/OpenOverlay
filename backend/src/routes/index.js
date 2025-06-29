@@ -1,8 +1,12 @@
-const express = require("express");
+import express from "express";
 const router = express.Router();
 
-router.use("/", require("./defaultRoutes"));
-router.use("/user", require("./userRoutes"));
-router.use("/workspace", require("./workspaceRoutes"));
+import defaultRoutes from "./defaultRoutes.js";
+import userRoutes from "./userRoutes.js";
+import workspaceRoutes from "./workspaceRoutes.js";
 
-module.exports = router;
+router.use("/", defaultRoutes);
+router.use("/user", userRoutes);
+router.use("/workspace", workspaceRoutes);
+
+export default router;

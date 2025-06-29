@@ -1,14 +1,14 @@
-const db = require("./db");
-const supertokens = require("supertokens-node");
+import db from "./db.js";
+import SuperTokens from "supertokens-node";
 
-const fs = require("fs");
-const path = require("path");
+import fs from "fs";
+import path from "path";
 
 const getUserData = async (userId) => {
   const [result] = await db.query("SELECT * FROM user WHERE userId = ?", [userId]);
 
   if (result[0]) {
-    const userData = await supertokens.getUser(userId);
+    const userData = await SuperTokens.getUser(userId);
     return {
       userId: userId,
       username: result[0].username,
@@ -21,7 +21,7 @@ const getUserData = async (userId) => {
   }
 };
 
-const createUser = async (req, res) => {
+export const createUser = async (req, res) => {
   const { username } = req?.body;
   const userId = req.session.getUserId();
   const filename = req.file?.filename || null;
@@ -60,7 +60,7 @@ const deleteUpload = (filename) => {
   });
 };
 
-const getUsers = async (req, res) => {
+export const getUsers = async (req, res) => {
   try {
     const [result] = await db.query("SELECT userId FROM user");
     const users = await Promise.all(result.map(async (user) => await getUserData(user.userId)));
@@ -70,7 +70,7 @@ const getUsers = async (req, res) => {
   }
 };
 
-const getOwnUser = async (req, res) => {
+export const getOwnUser = async (req, res) => {
   let userId = req.session.getUserId();
   const user = await getUserData(userId);
   if (user) {
@@ -79,5 +79,3 @@ const getOwnUser = async (req, res) => {
     res.status(404).json({ message: "User not found" });
   }
 };
-
-module.exports = { createUser, getUsers, getOwnUser };

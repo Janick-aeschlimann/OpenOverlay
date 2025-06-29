@@ -1,6 +1,6 @@
-const db = require("./db");
+import db from "./db.js";
 
-const createWorkspace = async (req, res) => {
+export const createWorkspace = async (req, res) => {
   const { name, slug, logo } = req?.body;
   let userId = req.session.getUserId();
 
@@ -38,7 +38,7 @@ const isValidSlug = (slug) => {
   return basicCheck && hasLetter;
 };
 
-const getWorkspaceWithId = async (req, res) => {
+export const getWorkspaceWithId = async (req, res) => {
   const workspaceId = req.params.workspaceId;
   const userId = req.session.getUserId();
 
@@ -67,7 +67,7 @@ const getWorkspaceWithId = async (req, res) => {
   }
 };
 
-const getWorkspaceWithSlug = async (req, res) => {
+export const getWorkspaceWithSlug = async (req, res) => {
   const slug = req.params.slug;
   const userId = req.session.getUserId();
 
@@ -96,7 +96,7 @@ const getWorkspaceWithSlug = async (req, res) => {
   }
 };
 
-const getWorkspaces = async (req, res) => {
+export const getWorkspaces = async (req, res) => {
   const userId = req.session.getUserId();
   const [result] = await db.query(
     `SELECT DISTINCT w.*, CASE WHEN w.ownerId = :userId THEN 'owner' ELSE wr.name END AS access
@@ -109,18 +109,10 @@ const getWorkspaces = async (req, res) => {
   res.send(result);
 };
 
-const getOwnedWorkspaces = async (req, res) => {
+export const getOwnedWorkspaces = async (req, res) => {
   const userId = req.session.getUserId();
   const [result] = await db.query("SELECT *, 'owner' AS access FROM workspace WHERE ownerId = ?", [
     userId,
   ]);
   res.send(result);
-};
-
-module.exports = {
-  getWorkspaceWithId,
-  getWorkspaceWithSlug,
-  getWorkspaces,
-  getOwnedWorkspaces,
-  createWorkspace,
 };

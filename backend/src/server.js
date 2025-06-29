@@ -1,8 +1,30 @@
-require("dotenv").config();
-const app = require("./app");
+import app from "./app.js";
+import { createServer } from "http";
+import { setupWSConnection } from "./config/yjs/util.js";
+import { WebSocketServer } from "ws";
 
-PORT = process.env.PORT | 3000;
+const PORT = process.env.PORT || 3000;
 
-app.listen(PORT, () => {
+const server = createServer(app);
+const wss = new WebSocketServer({ noServer: true });
+
+const docs = new Map();
+
+server.on("upgrade", async (req, socket, head) => {
+  const cookies = req.headers.cookie || "";
+  const parsedCookies = Object.fromEntries(cookies.split("; ").map((cookie) => cookie.split("=")));
+  const token = parsedCookies.sAccessToken;
+  wss.handleUpgrade(req, socket, head, (ws) => {
+    const customReq = req;
+    customReq.token = token;
+    wss.emit("connection", ws, customReq);
+  });
+});
+
+wss.on("connection", (ws, req) => {
+  setupWSConnection(ws, req, { docs });
+});
+
+server.listen(PORT, () => {
   console.log(`Server Listening on Port: ${PORT}`);
 });
