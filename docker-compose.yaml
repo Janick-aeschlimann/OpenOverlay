@@ -1,0 +1,14 @@
+version: "3.8"
+services:
+  backend:
+    build: ./backend
+    env_file: ./backend/.env.production
+    ports:
+      - "4001:3000"
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "4000:80"
+    restart: unless-stopped

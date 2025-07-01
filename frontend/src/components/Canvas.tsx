@@ -6,11 +6,6 @@ import { Button } from "./shadcn/ui/button";
 import { useAuthStore } from "@/store/auth";
 import { MousePointer2 } from "lucide-react";
 
-interface Cursor {
-  x: number;
-  y: number;
-}
-
 const Canvas: React.FC = () => {
   const [count, setCount] = useState(0);
   const [clients, setClients] = useState<any[]>([]);
@@ -60,7 +55,8 @@ const Canvas: React.FC = () => {
       });
     });
 
-    awareness.on("change", (changes) => {
+    awareness.on("change", (changes: any) => {
+      console.log(changes);
       const states = Array.from(awareness.getStates().entries());
       setClients(
         states
