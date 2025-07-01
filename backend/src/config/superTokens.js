@@ -13,7 +13,7 @@ export function initSuperTokens() {
     },
     appInfo: {
       appName: "OpenOverlay",
-      apiDomain: `http://${process.env.API_HOST}:3000`,
+      apiDomain: `http://${process.env.API_HOST}:${process.env.PORT}`,
       websiteDomain: process.env.FRONTEND_URL,
       apiBasePath: "/auth",
     },
