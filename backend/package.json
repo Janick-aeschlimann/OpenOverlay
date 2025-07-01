@@ -27,7 +27,7 @@
     "start": "node src/server.js"
   },
   "dependencies": {
-    "@y/protocols": "^1.0.6-0",
+    "@y/protocols": "^1.0.6-1",
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
