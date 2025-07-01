@@ -13,7 +13,7 @@ export function initSuperTokens() {
     },
     appInfo: {
       appName: "OpenOverlay",
-      apiDomain: `http://${process.env.API_HOST}:${process.env.PORT}`,
+      apiDomain: process.env.API_URL,
       websiteDomain: process.env.FRONTEND_URL,
       apiBasePath: "/auth",
     },
@@ -38,7 +38,7 @@ export function initSuperTokens() {
         disableMFA: true,
       }),
       EmailPassword.init(), // initializes signin / sign up features
-      Session.init(), // initializes session features
+      Session.init({ cookieSecure: true }), // initializes session features
       Dashboard.init(),
     ],
   });

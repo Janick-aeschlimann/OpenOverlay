@@ -24,7 +24,7 @@ const wsReadyStateClosing = 2; // eslint-disable-line
 const wsReadyStateClosed = 3; // eslint-disable-line
 
 var client = jwksClient({
-  jwksUri: `http://${process.env.API_HOST}:${process.env.PORT}/auth/jwt/jwks.json`,
+  jwksUri: `${process.env.API_URL}/auth/jwt/jwks.json`,
 });
 
 function getKey(header, callback) {
