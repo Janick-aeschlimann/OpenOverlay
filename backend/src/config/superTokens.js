@@ -8,12 +8,12 @@ export function initSuperTokens() {
   supertokens.init({
     framework: "express",
     supertokens: {
-      connectionURI: "http://184.174.36.51:3567",
+      connectionURI: process.env.SUPERTOKENS_URL,
       // apiKey: <YOUR_API_KEY>
     },
     appInfo: {
       appName: "OpenOverlay",
-      apiDomain: "http://192.168.77.176:3000",
+      apiDomain: `http://${process.env.API_HOST}:3000`,
       websiteDomain: process.env.FRONTEND_URL,
       apiBasePath: "/auth",
     },
