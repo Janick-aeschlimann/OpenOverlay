@@ -1,3 +1,6 @@
+import dotenv from "dotenv";
+dotenv.config();
+
 import app from "./app.js";
 import { createServer } from "http";
 import { setupWSConnection } from "./config/yjs/util.js";
