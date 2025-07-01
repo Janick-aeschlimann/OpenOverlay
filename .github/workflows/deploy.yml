@@ -12,6 +12,7 @@ jobs:
     steps:
       - name: Add SSH host to known_hosts
         run: |
+          mkdir -p ~/.ssh
           ssh-keyscan -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
 
       - name: Checkout Code
