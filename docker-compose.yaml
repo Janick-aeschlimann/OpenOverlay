@@ -3,11 +3,11 @@ services:
     build: ./backend
     env_file: ./backend/.env.production
     ports:
-      - "4001:3000"
+      - "7001:3000"
     restart: unless-stopped
 
   frontend:
     build: ./frontend
     ports:
-      - "4000:80"
+      - "7000:80"
     restart: unless-stopped
