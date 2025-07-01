@@ -1,6 +1,6 @@
 import Session from "supertokens-web-js/recipe/session";
 
-const APIUrl = "http://localhost:3000/api";
+const APIUrl = `${import.meta.env.VITE_API_URL}/api`;
 
 export const GetAPI = async (
   endpoint: string,

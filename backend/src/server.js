@@ -25,6 +25,6 @@ wss.on("connection", (ws, req) => {
   setupWSConnection(ws, req, { docs });
 });
 
-server.listen(PORT, () => {
+server.listen(PORT, process.env.API_HOST, () => {
   console.log(`Server Listening on Port: ${PORT}`);
 });

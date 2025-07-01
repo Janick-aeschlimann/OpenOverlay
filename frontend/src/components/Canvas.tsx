@@ -4,6 +4,7 @@ import { WebsocketProvider } from "y-websocket";
 import type { YMap } from "node_modules/yjs/dist/src/types/YMap";
 import { Button } from "./shadcn/ui/button";
 import { useAuthStore } from "@/store/auth";
+import { MousePointer2 } from "lucide-react";
 
 interface Cursor {
   x: number;
@@ -12,16 +13,38 @@ interface Cursor {
 
 const Canvas: React.FC = () => {
   const [count, setCount] = useState(0);
-  const [cursor, setCursor] = useState<Cursor>({ x: 0, y: 0 });
+  const [clients, setClients] = useState<any[]>([]);
   const user = useAuthStore().user;
 
   const ymapRef = useRef<YMap<unknown>>(null);
   const providerRef = useRef<WebsocketProvider>(null);
 
+  const userColors = [
+    "#FF4C4C", // Vivid Red
+    "#FF9F1C", // Orange
+    "#FFD23F", // Bright Yellow
+    "#3DFA7E", // Neon Green
+    "#2EC4B6", // Aqua Teal
+    "#00CFFF", // Cyan
+    "#4F9DFF", // Sky Blue
+    "#845EC2", // Soft Purple
+    "#D65DB1", // Pink-Magenta
+    "#FF6F91", // Watermelon Pink
+    "#FF3CAC", // Hot Pink
+    "#F5A623", // Warm Amber
+    "#00FFAB", // Mint Neon
+  ];
+
+  // Function to get a random color
+  const getRandomColor = () => {
+    const index = Math.floor(Math.random() * userColors.length);
+    return userColors[index];
+  };
+
   useEffect(() => {
     const ydoc = new Y.Doc();
     const provider = new WebsocketProvider(
-      "ws://localhost:3000",
+      import.meta.env.VITE_WS_URL,
       "my-shared-room",
       ydoc
     );
@@ -39,11 +62,11 @@ const Canvas: React.FC = () => {
 
     awareness.on("change", (changes) => {
       const states = Array.from(awareness.getStates().entries());
-      for (const [clientID, state] of states) {
-        if (clientID === awareness.clientID) continue; // nicht du selbst
-        setCursor(state.cursor);
-        console.log(state.user);
-      }
+      setClients(
+        states
+          .filter(([clientId]) => clientId != awareness.clientID)
+          .map((c) => c[1])
+      );
     });
 
     const ymap = ydoc.getMap("counter");
@@ -71,6 +94,7 @@ const Canvas: React.FC = () => {
     providerRef.current?.awareness.setLocalStateField("user", {
       userId: user?.userId,
       username: user?.username,
+      color: getRandomColor(),
     });
   }, [user]);
 
@@ -81,13 +105,20 @@ const Canvas: React.FC = () => {
 
   return (
     <>
-      <div className="h-full flex flex-col gap-2 items-center justify-center">
+      <div className="h-full flex flex-col gap-2 items-center justify-center overflow-hidden">
         <Button onClick={increment}>Increment</Button>
         <p>Count: {count}</p>
-        <div
-          className={`w-10 h-10 bg-red-500 absolute`}
-          style={{ left: cursor?.x || 0, top: cursor?.y || 0 }}
-        ></div>
+        {clients.map((client) => (
+          <div
+            className="absolute"
+            style={{ left: client.cursor?.x || 0, top: client.cursor?.y || 0 }}
+          >
+            <MousePointer2
+              style={{ fill: client.user.color, color: client.user.color }}
+            />
+            <p style={{ color: client.user.color }}>{client.user.username}</p>
+          </div>
+        ))}
       </div>
     </>
   );

@@ -31,7 +31,7 @@ function App() {
     SuperTokens.init({
       appInfo: {
         appName: "OpenOverlay",
-        apiDomain: "http://localhost:3000",
+        apiDomain: import.meta.env.VITE_API_URL,
         apiBasePath: "/auth",
       },
       recipeList: [

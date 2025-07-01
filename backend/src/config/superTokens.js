@@ -13,10 +13,9 @@ export function initSuperTokens() {
     },
     appInfo: {
       appName: "OpenOverlay",
-      apiDomain: "http://localhost:3000",
-      websiteDomain: "http://localhost:3001",
+      apiDomain: "http://192.168.77.176:3000",
+      websiteDomain: process.env.FRONTEND_URL,
       apiBasePath: "/auth",
-      websiteBasePath: "/auth",
     },
     recipeList: [
       ThirdParty.init({
