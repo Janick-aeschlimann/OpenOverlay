@@ -15,7 +15,7 @@ const imageFileFilter = (req, file, cb) => {
 function createMulterConfig(folderName) {
   const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-      const dir = path.join(__dirname, "../..", "uploads", folderName);
+      const dir = path.join(__dirname, "../..", "data", "uploads", folderName);
       fs.mkdirSync(dir, { recursive: true });
       cb(null, dir);
     },

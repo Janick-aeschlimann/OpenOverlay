@@ -33,11 +33,13 @@
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2",
     "jwks-rsa": "^3.2.0",
+    "level": "^10.0.0",
     "lib0": "^0.2.109",
     "multer": "^2.0.1",
     "mysql2": "^3.14.1",
     "supertokens-node": "^22.1.0",
     "ws": "^8.18.3",
+    "y-leveldb": "^0.2.0",
     "yjs": "^13.6.27"
   },
   "devDependencies": {

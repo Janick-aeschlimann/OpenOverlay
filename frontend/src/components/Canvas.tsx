@@ -40,7 +40,7 @@ const Canvas: React.FC = () => {
     const ydoc = new Y.Doc();
     const provider = new WebsocketProvider(
       import.meta.env.VITE_WS_URL,
-      "my-shared-room",
+      "1",
       ydoc
     );
 

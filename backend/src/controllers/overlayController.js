@@ -55,3 +55,17 @@ export const getWorkspaceOverlays = async (req, res) => {
 
   res.send(result);
 };
+
+export const hasOverlayAccess = async (overlayId, userId) => {
+  const [result] = await db.query("SELECT * FROM overlay WHERE overlayId = ?", [overlayId]);
+
+  if (result[0]) {
+    if (await hasWorkspaceAccess(userId, result[0].workspaceId)) {
+      return true;
+    } else {
+      return false;
+    }
+  } else {
+    return false;
+  }
+};

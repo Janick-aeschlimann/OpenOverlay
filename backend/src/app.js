@@ -22,7 +22,7 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.use("/uploads", express.static("uploads"));
+app.use("/uploads", express.static("data/uploads"));
 
 app.use(middleware());
 app.use("/api", routes);

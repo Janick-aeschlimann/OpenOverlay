@@ -5,6 +5,8 @@ services:
     ports:
       - "7001:7001"
     restart: unless-stopped
+    volumes:
+      - ./data/yjs-db:/app/yjs-db
 
   frontend:
     build: ./frontend

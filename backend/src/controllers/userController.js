@@ -54,7 +54,7 @@ export const createUser = async (req, res) => {
 };
 
 const deleteUpload = (filename) => {
-  const fullPath = path.join(__dirname, "../..", "uploads", "profile-pictures", filename);
+  const fullPath = path.join(__dirname, "../..", "data", "uploads", "profile-pictures", filename);
   fs.unlink(fullPath, (err) => {
     if (err) console.error("Failed to delete file:", err);
   });

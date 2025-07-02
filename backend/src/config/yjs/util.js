@@ -12,6 +12,7 @@ import jwksClient from "jwks-rsa";
 import jwt from "jsonwebtoken";
 
 import { callbackHandler, isCallbackSet } from "./callback.js";
+import { hasOverlayAccess } from "../../controllers/overlayController.js";
 
 const CALLBACK_DEBOUNCE_WAIT = parseInt(process.env.CALLBACK_DEBOUNCE_WAIT || "2000");
 const CALLBACK_DEBOUNCE_MAXWAIT = parseInt(process.env.CALLBACK_DEBOUNCE_MAXWAIT || "10000");
@@ -40,7 +41,6 @@ function authenticateUser(token) {
       if (error) {
         reject(error);
       }
-      console.log(decoded);
       resolve(decoded);
     });
   });
@@ -275,9 +275,6 @@ export const setupWSConnection = async (
 ) => {
   conn.binaryType = "arraybuffer";
   // get doc, initialize if it does not exist yet
-  const doc = getYDoc(docName, gc);
-  doc.conns.set(conn, new Set());
-  // listen and reply to events
 
   const token = req.token;
 
@@ -285,8 +282,21 @@ export const setupWSConnection = async (
   try {
     payload = await authenticateUser(token);
   } catch {
-    return conn.close();
+    return conn.close(4001, "Unauthorized");
   }
+
+  const userId = payload.sub;
+  conn.userId = userId;
+
+  console.log(`\x1b[32m+ User ${userId} connected \x1b[0m`);
+
+  if (!(await hasOverlayAccess(docName, userId))) {
+    return conn.close(4002, "Forbidden");
+  }
+
+  const doc = getYDoc(docName, gc);
+  doc.conns.set(conn, new Set());
+  // listen and reply to events
 
   conn.on(
     "message",
@@ -313,6 +323,7 @@ export const setupWSConnection = async (
     }
   }, pingTimeout);
   conn.on("close", () => {
+    console.log(`\x1b[31m- User ${userId} disconnected \x1b[0m`);
     closeConn(doc, conn);
     clearInterval(pingInterval);
   });
@@ -335,6 +346,12 @@ export const setupWSConnection = async (
         encoder,
         awarenessProtocol.encodeAwarenessUpdate(doc.awareness, Array.from(awarenessStates.keys()))
       );
+      console.log(
+        `Send awareness update to user ${conn.userId} on doc ${doc.name}, states: ${awarenessStates}`
+      );
+
+      console.log(doc.getMap("counter").get("value"));
+
       send(doc, conn, encoding.toUint8Array(encoder));
     }
   }

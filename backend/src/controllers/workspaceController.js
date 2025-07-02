@@ -133,7 +133,11 @@ export const hasWorkspaceAccess = async (userId, workspaceId) => {
     { userId: userId, workspaceId: workspaceId }
   );
   if (result[0]) {
-    return true;
+    if (result[0].access) {
+      return true;
+    } else {
+      return false;
+    }
   } else {
     return false;
   }
