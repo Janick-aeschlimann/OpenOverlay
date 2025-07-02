@@ -131,7 +131,7 @@ function App() {
               }
             />
             <Route
-              path="/canvas"
+              path="/canvas/:id"
               element={
                 <ProtectedRoute>
                   <Editor />

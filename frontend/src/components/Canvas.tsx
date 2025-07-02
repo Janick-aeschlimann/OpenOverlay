@@ -5,11 +5,16 @@ import type { YMap } from "node_modules/yjs/dist/src/types/YMap";
 import { Button } from "./shadcn/ui/button";
 import { useAuthStore } from "@/store/auth";
 import { MousePointer2 } from "lucide-react";
+import { useParams } from "react-router-dom";
 
 const Canvas: React.FC = () => {
   const [count, setCount] = useState(0);
   const [clients, setClients] = useState<any[]>([]);
   const user = useAuthStore().user;
+
+  const [error, setError] = useState<string | null>(null);
+
+  const id = useParams().id;
 
   const ymapRef = useRef<YMap<unknown>>(null);
   const providerRef = useRef<WebsocketProvider>(null);
@@ -40,9 +45,14 @@ const Canvas: React.FC = () => {
     const ydoc = new Y.Doc();
     const provider = new WebsocketProvider(
       import.meta.env.VITE_WS_URL,
-      "1",
+      id?.toString() || "",
       ydoc
     );
+
+    provider.ws?.addEventListener("close", (event) => {
+      setError(event.code + " " + event.reason);
+      provider.shouldConnect = false;
+    });
 
     const awareness = provider.awareness;
 
@@ -56,7 +66,6 @@ const Canvas: React.FC = () => {
     });
 
     awareness.on("change", (changes: any) => {
-      console.log(changes);
       const states = Array.from(awareness.getStates().entries());
       setClients(
         states
@@ -75,6 +84,16 @@ const Canvas: React.FC = () => {
     const updateCount = () => {
       setCount(ymap.get("value") as number);
     };
+
+    provider.on("status", (event) => {
+      if (event.status === "connected") {
+        if (!ymap.has("value")) {
+          ymap.set("value", 0);
+        }
+        updateCount();
+        ymap.observe(updateCount);
+      }
+    });
 
     ymap.observe(updateCount);
     updateCount();
@@ -104,6 +123,7 @@ const Canvas: React.FC = () => {
       <div className="h-full flex flex-col gap-2 items-center justify-center overflow-hidden">
         <Button onClick={increment}>Increment</Button>
         <p>Count: {count}</p>
+        {error ? <p className="text-red-500">{error}</p> : null}
         {clients.map((client) => (
           <div
             className="absolute"
