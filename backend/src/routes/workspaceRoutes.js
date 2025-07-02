@@ -11,10 +11,14 @@ import {
   createWorkspace,
 } from "../controllers/workspaceController.js";
 
+import overlayRoutes from "./overlayRoutes.js";
+
 router.get("/", verifySession(), getWorkspaces);
 router.get("/owned", verifySession(), getOwnedWorkspaces);
 router.get("/id/:workspaceId", verifySession(), getWorkspaceWithId);
 router.get("/slug/:slug", verifySession(), getWorkspaceWithSlug);
 router.post("/create", verifySession(), createWorkspace);
+
+router.use("/:workspaceId/overlay", overlayRoutes);
 
 export default router;

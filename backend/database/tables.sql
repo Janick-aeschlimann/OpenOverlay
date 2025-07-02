@@ -41,3 +41,15 @@ CREATE TABLE `workspace_access` (
 	Foreign Key (roleId) REFERENCES workspace_role(roleId),
 	Foreign Key (userId) REFERENCES user(userId)
 );
+
+CREATE TABLE `overlay` (
+	`overlayId` INTEGER NOT NULL AUTO_INCREMENT UNIQUE,
+	`name` VARCHAR(255) NOT NULL,
+	`description` TEXT(65535),
+	`workspaceId` INTEGER NOT NULL,
+	`created_at` TIMESTAMP NOT NULL,
+	`userId` VARCHAR(255) NOT NULL,
+	PRIMARY KEY(`overlayId`),
+	Foreign Key (workspaceId) REFERENCES workspace(workspaceId),
+	Foreign Key (userId) REFERENCES user(userId)
+);

@@ -116,3 +116,25 @@ export const getOwnedWorkspaces = async (req, res) => {
   ]);
   res.send(result);
 };
+
+export const hasWorkspaceAccess = async (userId, workspaceId) => {
+  const [result] = await db.query(
+    `SELECT 
+		  w.*,
+		  CASE
+		    WHEN w.ownerId = :userId THEN 'owner'
+		    WHEN wa.userId = :userId THEN wr.name
+		    ELSE NULL
+		  END AS access
+		FROM workspace w
+		LEFT JOIN workspace_role wr ON w.workspaceId = wr.workspaceId
+		LEFT JOIN workspace_access wa ON wr.roleId = wa.roleId AND wa.userId = :userId
+		WHERE w.workspaceId = :workspaceId;`,
+    { userId: userId, workspaceId: workspaceId }
+  );
+  if (result[0]) {
+    return true;
+  } else {
+    return false;
+  }
+};
