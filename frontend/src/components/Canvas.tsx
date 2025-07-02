@@ -65,7 +65,7 @@ const Canvas: React.FC = () => {
       });
     });
 
-    awareness.on("change", (changes: any) => {
+    awareness.on("change", () => {
       const states = Array.from(awareness.getStates().entries());
       setClients(
         states
