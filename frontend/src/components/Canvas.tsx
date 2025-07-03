@@ -77,9 +77,9 @@ const Canvas: React.FC = () => {
     const ymap = ydoc.getMap("counter");
     ymapRef.current = ymap;
 
-    if (!ymap.has("value")) {
-      ymap.set("value", 0);
-    }
+    // if (!ymap.has("value")) {
+    //   ymap.set("value", 0);
+    // }
 
     const updateCount = () => {
       setCount(ymap.get("value") as number);
