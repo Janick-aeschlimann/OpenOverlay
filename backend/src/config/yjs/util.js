@@ -38,11 +38,9 @@ function getKey(header, callback) {
 function authenticateUser(token) {
   return new Promise((resolve, reject) => {
     jwt.verify(token, getKey, (error, decoded) => {
-      console.log(error);
       if (error) {
         reject(error);
       }
-      console.log(decoded);
       resolve(decoded);
     });
   });
@@ -293,7 +291,7 @@ export const setupWSConnection = async (
   console.log(`\x1b[32m+ User ${userId} connected \x1b[0m`);
 
   if (!(await hasOverlayAccess(docName, userId))) {
-    return conn.close(4002, "Forbidden");
+    //return conn.close(4002, "Forbidden");
   }
 
   const doc = getYDoc(docName, gc);
