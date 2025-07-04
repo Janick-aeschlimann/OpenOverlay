@@ -1,12 +1,12 @@
 services:
   backend:
     build: ./backend
-    env_file: ./backend/.env.production
+    env_file: ./backend/.env
     ports:
       - "7001:7001"
     restart: unless-stopped
     volumes:
-      - ./data/yjs-db:/app/yjs-db
+      - ./data:/app/data
 
   frontend:
     build: ./frontend
@@ -14,11 +14,29 @@ services:
       - "7000:80"
     restart: unless-stopped
 
-  redis:
-    image: redis:latest
-    container_name: redis
+  yjs-server:
+    build: ./y-redis
     ports:
-      - "6379:6379"
-    volumes:
-      - ./data/redis:/data
-    command: ["redis-server", "--appendonly", "yes"]
+      - "7002:3002"
+    command: node ./bin/server.js --no-colors
+    env_file: ./y-redis/.env
+    depends_on:
+      - minio
+      - redis
+      - backend
+  yjs-worker:
+    build: ./y-redis
+    command: node ./bin/worker.js --no-colors
+    env_file: ./y-redis/.env
+    depends_on:
+      - minio
+      - redis
+      - backend
+  redis:
+    image: redis:alpine
+  minio:
+    image: quay.io/minio/minio
+    ports:
+      - 9000:9000
+      - 9001:9001
+    command: server /data --console-address :9001

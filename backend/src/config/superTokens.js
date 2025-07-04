@@ -38,7 +38,7 @@ export function initSuperTokens() {
         disableMFA: true,
       }),
       EmailPassword.init(), // initializes signin / sign up features
-      Session.init({ cookieSecure: true }), // initializes session features
+      Session.init({ cookieSecure: true, exposeAccessTokenToFrontendInCookieBasedAuth: true }), // initializes session features
       Dashboard.init(),
     ],
   });

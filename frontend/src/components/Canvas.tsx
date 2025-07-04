@@ -6,6 +6,7 @@ import { Button } from "./shadcn/ui/button";
 import { useAuthStore } from "@/store/auth";
 import { MousePointer2 } from "lucide-react";
 import { useParams } from "react-router-dom";
+import Session from "supertokens-web-js/recipe/session";
 
 const Canvas: React.FC = () => {
   const [count, setCount] = useState(0);
@@ -42,67 +43,67 @@ const Canvas: React.FC = () => {
   };
 
   useEffect(() => {
-    const ydoc = new Y.Doc();
-    const provider = new WebsocketProvider(
-      import.meta.env.VITE_WS_URL,
-      id?.toString() || "",
-      ydoc
-    );
-
-    provider.ws?.addEventListener("close", (event) => {
-      setError(event.code + " " + event.reason);
-      provider.shouldConnect = false;
-    });
-
-    const awareness = provider.awareness;
-
-    providerRef.current = provider;
-
-    document.addEventListener("pointermove", (event) => {
-      awareness.setLocalStateField("cursor", {
-        x: event.clientX,
-        y: event.clientY,
-      });
-    });
-
-    awareness.on("change", () => {
-      const states = Array.from(awareness.getStates().entries());
-      setClients(
-        states
-          .filter(([clientId]) => clientId != awareness.clientID)
-          .map((c) => c[1])
+    const connect = async () => {
+      const accessToken = (await Session.getAccessToken()) || "";
+      const ydoc = new Y.Doc();
+      const provider = new WebsocketProvider(
+        import.meta.env.VITE_WS_URL,
+        id?.toString() || "",
+        ydoc,
+        { params: { yauth: accessToken } }
       );
-    });
 
-    const ymap = ydoc.getMap("counter");
-    ymapRef.current = ymap;
+      provider.ws?.addEventListener("close", (event) => {
+        setError(event.code + " " + event.reason);
+        provider.shouldConnect = false;
+      });
 
-    // if (!ymap.has("value")) {
-    //   ymap.set("value", 0);
-    // }
+      const awareness = provider.awareness;
 
-    const updateCount = () => {
-      setCount(ymap.get("value") as number);
-    };
+      providerRef.current = provider;
 
-    provider.on("status", (event) => {
-      if (event.status === "connected") {
-        if (!ymap.has("value")) {
-          ymap.set("value", 0);
+      document.addEventListener("pointermove", (event) => {
+        awareness.setLocalStateField("cursor", {
+          x: event.clientX,
+          y: event.clientY,
+        });
+      });
+
+      awareness.on("change", () => {
+        const states = Array.from(awareness.getStates().entries());
+        setClients(
+          states
+            .filter(([clientId]) => clientId != awareness.clientID)
+            .map((c) => c[1])
+        );
+      });
+
+      const ymap = ydoc.getMap("counter");
+      ymapRef.current = ymap;
+
+      // if (!ymap.has("value")) {
+      //   ymap.set("value", 0);
+      // }
+
+      const updateCount = () => {
+        setCount(ymap.get("value") as number);
+      };
+
+      provider.on("status", (event) => {
+        if (event.status === "connected") {
+          // if (!ymap.has("value")) {
+          //   ymap.set("value", 0);
+          // }
+          updateCount();
+          ymap.observe(updateCount);
         }
-        updateCount();
-        ymap.observe(updateCount);
-      }
-    });
+      });
 
-    ymap.observe(updateCount);
-    updateCount();
-
-    return () => {
-      ymap.unobserve(updateCount);
-      provider.destroy();
-      ydoc.destroy();
+      ymap.observe(updateCount);
+      updateCount();
     };
+
+    connect();
   }, []);
 
   useEffect(() => {
@@ -130,9 +131,9 @@ const Canvas: React.FC = () => {
             style={{ left: client.cursor?.x || 0, top: client.cursor?.y || 0 }}
           >
             <MousePointer2
-              style={{ fill: client.user.color, color: client.user.color }}
+              style={{ fill: client.user?.color, color: client.user?.color }}
             />
-            <p style={{ color: client.user.color }}>{client.user.username}</p>
+            <p style={{ color: client.user?.color }}>{client.user?.username}</p>
           </div>
         ))}
       </div>
