@@ -14,3 +14,12 @@ export interface Workspace {
   ownerId: string;
   access: string;
 }
+
+export interface CanvasObject {
+  id: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  rotation: number;
+}

@@ -88,9 +88,7 @@ export const googleLogin = async () => {
   try {
     const authUrl = await getAuthorisationURLWithQueryParamsAndSetState({
       thirdPartyId: "google",
-      frontendRedirectURI: `${
-        import.meta.env.VITE_FRONTEND_URL
-      }/auth/callback/google`,
+      frontendRedirectURI: `${window.location.origin.toString()}/auth/callback/google`,
     });
     return { success: true, data: { authUrl: authUrl } };
   } catch (err: any) {
