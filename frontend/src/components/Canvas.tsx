@@ -4,15 +4,12 @@ import { useAuthStore } from "@/store/auth";
 import { Plus } from "lucide-react";
 import { useParams } from "react-router-dom";
 import CanvasObjectComponent from "./CanvasObject";
-import type { YMap } from "node_modules/yjs/dist/src/types/YMap";
 import { useCanvasStore } from "@/store/canvas";
 import { CanvasSync } from "@/lib/yjsSync";
 import type { CanvasObject } from "@/types/types";
 import CanvasClient from "./CanvasClient";
 
 const Canvas: React.FC = () => {
-  const [count, setCount] = useState(0);
-
   const {
     canvasObjects,
     canvasTransform,
@@ -28,7 +25,6 @@ const Canvas: React.FC = () => {
 
   const [error, setError] = useState<string | null>(null);
 
-  const ymapRef = useRef<YMap<unknown>>(null);
   const canvasSyncRef = useRef<CanvasSync>(null);
 
   const canvasId = useParams().id;
