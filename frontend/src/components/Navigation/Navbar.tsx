@@ -40,13 +40,18 @@ const Navbar: React.FC<INavbarProps> = (props) => {
           <SidebarTrigger className="-ml-1 cursor-pointer" />
           <Separator
             orientation="vertical"
-            className="mr-2 data-[orientation=vertical]:h-4"
+            className="data-[orientation=vertical]:h-4"
           />
-          <h1 className="text-xl font-semibold pb-1">{props.title}</h1>
+          <h1 className="text-xl font-semibold pl-2 pb-1 hidden sm:block">
+            {props.title}
+          </h1>
         </div>
         <div className="bg-background flex items-center gap-4 rounded-full border py-1 px-4 shadow-xs">
-          <Button className="rounded-full cursor-pointer">
+          <Button className="rounded-full cursor-pointer hidden sm:block">
             Create Overlay
+          </Button>
+          <Button className="rounded-full cursor-pointer sm:hidden">
+            Create
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger>

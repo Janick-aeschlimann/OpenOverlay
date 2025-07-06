@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState } from "react";
-import { Button } from "./shadcn/ui/button";
+import { Button } from "../shadcn/ui/button";
 import { useAuthStore } from "@/store/auth";
-import { Plus } from "lucide-react";
-import { useParams } from "react-router-dom";
-import CanvasObjectComponent from "./CanvasObject";
+import { ArrowLeft, Plus } from "lucide-react";
+import { useNavigate, useParams } from "react-router-dom";
+import CanvasObjectComponent from "@/components/Canvas/CanvasObject";
 import { useCanvasStore } from "@/store/canvas";
 import { CanvasSync } from "@/lib/yjsSync";
 import type { CanvasObject } from "@/types/types";
-import CanvasClient from "./CanvasClient";
+import CanvasClient from "@/components/Canvas/CanvasClient";
 
 const Canvas: React.FC = () => {
   const {
@@ -27,6 +27,7 @@ const Canvas: React.FC = () => {
 
   const canvasSyncRef = useRef<CanvasSync>(null);
 
+  const navigate = useNavigate();
   const canvasId = useParams().id;
 
   const userColors = [
@@ -286,6 +287,16 @@ const Canvas: React.FC = () => {
           }}
         >
           <Plus />
+        </Button>
+        <Button
+          className="absolute top-3 left-3 cursor-pointer"
+          size={"default"}
+          onClick={() => {
+            navigate(-1);
+          }}
+        >
+          <ArrowLeft />
+          Back
         </Button>
       </div>
     </>

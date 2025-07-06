@@ -1,5 +1,5 @@
-import * as React from "react";
 import {
+  ChevronRight,
   GalleryVerticalEnd,
   Home,
   LayoutGrid,
@@ -19,14 +19,37 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
   SidebarRail,
 } from "@/components/shadcn/ui/sidebar";
 import { Separator } from "./ui/separator";
 import { Link } from "react-router-dom";
 import { useWorkspaceStore } from "@/store/workspace";
+import { Collapsible } from "@radix-ui/react-collapsible";
+import { CollapsibleContent, CollapsibleTrigger } from "./ui/collapsible";
+import { useEffect, useState } from "react";
+import { GetAPI } from "@/services/RequestService";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { activeWorkspace } = useWorkspaceStore();
+
+  const [overlays, setOverlays] = useState<Array<any>>([]);
+
+  useEffect(() => {
+    const fetchOverlays = async () => {
+      const response = await GetAPI(
+        `/workspace/${activeWorkspace?.workspaceId}/overlay`
+      );
+      if (response.success) {
+        setOverlays(response.data);
+      }
+    };
+    if (activeWorkspace) {
+      fetchOverlays();
+    }
+  }, [activeWorkspace]);
 
   const data = {
     workspaceNav: [
@@ -34,6 +57,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         name: "Overlays",
         url: `/workspace/${activeWorkspace?.slug}/overlays`,
         icon: GalleryVerticalEnd,
+        children: overlays.map((overlay) => ({
+          name: overlay.name,
+          url: `/workspace/${activeWorkspace?.workspaceId}/overlay/${overlay.overlayId}`,
+        })),
       },
       {
         name: "Members",
@@ -71,16 +98,52 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <SidebarGroupLabel>Workspace</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {data.workspaceNav.map((item) => (
-                  <SidebarMenuItem className="select-none cursor-pointer">
-                    <SidebarMenuButton asChild>
-                      <Link to={item.url}>
-                        <item.icon />
-                        <span>{item.name}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
+                {data.workspaceNav.map((item) => {
+                  if (item.children) {
+                    return (
+                      <Collapsible
+                        key={item.name}
+                        asChild
+                        defaultOpen={true}
+                        className="group/collapsible"
+                      >
+                        <SidebarMenuItem>
+                          <CollapsibleTrigger asChild>
+                            <SidebarMenuButton tooltip={item.name}>
+                              {item.icon && <item.icon />}
+                              <span>{item.name}</span>
+                              <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                            </SidebarMenuButton>
+                          </CollapsibleTrigger>
+                          <CollapsibleContent>
+                            <SidebarMenuSub>
+                              {item.children?.map((subItem) => (
+                                <SidebarMenuSubItem key={subItem.name}>
+                                  <SidebarMenuSubButton asChild>
+                                    <a href={subItem.url}>
+                                      <span>{subItem.name}</span>
+                                    </a>
+                                  </SidebarMenuSubButton>
+                                </SidebarMenuSubItem>
+                              ))}
+                            </SidebarMenuSub>
+                          </CollapsibleContent>
+                        </SidebarMenuItem>
+                      </Collapsible>
+                    );
+                  } else {
+                    return (
+                      <SidebarMenuItem className="select-none cursor-pointer">
+                        <SidebarMenuButton asChild>
+                          <Link to={item.url}>
+                            <item.icon />
+                            <span>{item.name}</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  }
+                })}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>

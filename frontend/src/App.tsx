@@ -21,7 +21,7 @@ import Dashboard from "./pages/main/DashboardPage";
 import Workspaces from "./pages/main/WorkspacesPage";
 import WorkspaceOverview from "./pages/workspace/WorkspaceOverviewPage";
 import CreateWorkspace from "./pages/workspace/CreateWorkspacePage";
-import Editor from "./pages/Editor/EditorPage";
+import OverlayEditor from "./pages/Editor/OverlayEditorPage";
 
 function App() {
   const user = useAuthStore().user;
@@ -131,10 +131,10 @@ function App() {
               }
             />
             <Route
-              path="/canvas/:id"
+              path="workspace/:workspaceId/overlay/:id"
               element={
                 <ProtectedRoute>
-                  <Editor />
+                  <OverlayEditor />
                 </ProtectedRoute>
               }
             />
