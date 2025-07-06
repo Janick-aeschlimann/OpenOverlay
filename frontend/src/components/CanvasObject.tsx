@@ -1,9 +1,10 @@
 import { useCanvasStore } from "@/store/canvas";
-import type { CanvasObject } from "@/types/types";
+import type { CanvasObject, CanvasTransform } from "@/types/types";
 import { useRef } from "react";
 
 export interface ICanvasObjectProps {
   object: CanvasObject;
+  canvasTransform: CanvasTransform;
   setCanvasObject: (object: CanvasObject) => void;
 }
 
@@ -18,8 +19,10 @@ const CanvasObjectComponent: React.FC<ICanvasObjectProps> = (props) => {
 
   const handleMouseMove = (event: MouseEvent) => {
     if (lastPos.current) {
-      const dx = event.clientX - lastPos.current.x;
-      const dy = event.clientY - lastPos.current.y;
+      const dx =
+        (event.clientX - lastPos.current.x) / props.canvasTransform.scale;
+      const dy =
+        (event.clientY - lastPos.current.y) / props.canvasTransform.scale;
 
       const x = props.object.x + dx;
       const y = props.object.y + dy;
@@ -33,11 +36,12 @@ const CanvasObjectComponent: React.FC<ICanvasObjectProps> = (props) => {
   };
 
   const handleMouseDown = (event: React.MouseEvent) => {
-    setSelectedCanvasObjectId(props.object.id);
-    lastPos.current = { x: event.clientX, y: event.clientY };
-    document.addEventListener("mousemove", handleMouseMove);
-    document.addEventListener("mouseup", handleMouseUp);
-    //(event.target as HTMLElement).classList.add("border-white");
+    if (event.button == 0) {
+      setSelectedCanvasObjectId(props.object.id);
+      lastPos.current = { x: event.clientX, y: event.clientY };
+      document.addEventListener("mousemove", handleMouseMove);
+      document.addEventListener("mouseup", handleMouseUp);
+    }
   };
 
   const handleMouseUp = () => {
@@ -47,7 +51,8 @@ const CanvasObjectComponent: React.FC<ICanvasObjectProps> = (props) => {
 
   const handleResizeTop = (event: MouseEvent) => {
     if (lastPos.current) {
-      const dy = event.clientY - lastPos.current.y;
+      const dy =
+        (event.clientY - lastPos.current.y) / props.canvasTransform.scale;
 
       const height = props.object.height - dy;
       const y = props.object.y + dy;
@@ -62,7 +67,8 @@ const CanvasObjectComponent: React.FC<ICanvasObjectProps> = (props) => {
 
   const handleResizeBottom = (event: MouseEvent) => {
     if (lastPos.current) {
-      const dy = event.clientY - lastPos.current.y;
+      const dy =
+        (event.clientY - lastPos.current.y) / props.canvasTransform.scale;
 
       const height = props.object.height + dy;
 
@@ -75,7 +81,8 @@ const CanvasObjectComponent: React.FC<ICanvasObjectProps> = (props) => {
 
   const handleResizeRight = (event: MouseEvent) => {
     if (lastPos.current) {
-      const dx = event.clientX - lastPos.current.x;
+      const dx =
+        (event.clientX - lastPos.current.x) / props.canvasTransform.scale;
 
       const width = props.object.width + dx;
 
@@ -88,7 +95,8 @@ const CanvasObjectComponent: React.FC<ICanvasObjectProps> = (props) => {
 
   const handleResizeLeft = (event: MouseEvent) => {
     if (lastPos.current) {
-      const dx = event.clientX - lastPos.current.x;
+      const dx =
+        (event.clientX - lastPos.current.x) / props.canvasTransform.scale;
 
       const width = props.object.width - dx;
       const x = props.object.x + dx;
@@ -103,8 +111,10 @@ const CanvasObjectComponent: React.FC<ICanvasObjectProps> = (props) => {
 
   const handleResizeTopLeft = (event: MouseEvent) => {
     if (lastPos.current) {
-      const dx = event.clientX - lastPos.current.x;
-      const dy = event.clientY - lastPos.current.y;
+      const dx =
+        (event.clientX - lastPos.current.x) / props.canvasTransform.scale;
+      const dy =
+        (event.clientY - lastPos.current.y) / props.canvasTransform.scale;
 
       const height = props.object.height - dy;
       const width = props.object.width - dx;
@@ -123,8 +133,10 @@ const CanvasObjectComponent: React.FC<ICanvasObjectProps> = (props) => {
 
   const handleResizeTopRight = (event: MouseEvent) => {
     if (lastPos.current) {
-      const dx = event.clientX - lastPos.current.x;
-      const dy = event.clientY - lastPos.current.y;
+      const dx =
+        (event.clientX - lastPos.current.x) / props.canvasTransform.scale;
+      const dy =
+        (event.clientY - lastPos.current.y) / props.canvasTransform.scale;
 
       const height = props.object.height - dy;
       const width = props.object.width + dx;
@@ -141,8 +153,10 @@ const CanvasObjectComponent: React.FC<ICanvasObjectProps> = (props) => {
 
   const handleResizeBottomRight = (event: MouseEvent) => {
     if (lastPos.current) {
-      const dx = event.clientX - lastPos.current.x;
-      const dy = event.clientY - lastPos.current.y;
+      const dx =
+        (event.clientX - lastPos.current.x) / props.canvasTransform.scale;
+      const dy =
+        (event.clientY - lastPos.current.y) / props.canvasTransform.scale;
 
       const height = props.object.height + dy;
       const width = props.object.width + dx;
@@ -157,8 +171,10 @@ const CanvasObjectComponent: React.FC<ICanvasObjectProps> = (props) => {
 
   const handleResizeBottomLeft = (event: MouseEvent) => {
     if (lastPos.current) {
-      const dx = event.clientX - lastPos.current.x;
-      const dy = event.clientY - lastPos.current.y;
+      const dx =
+        (event.clientX - lastPos.current.x) / props.canvasTransform.scale;
+      const dy =
+        (event.clientY - lastPos.current.y) / props.canvasTransform.scale;
 
       const height = props.object.height + dy;
       const width = props.object.width - dx;
@@ -181,41 +197,43 @@ const CanvasObjectComponent: React.FC<ICanvasObjectProps> = (props) => {
   const handleResizeMouseDown = (event: React.MouseEvent) => {
     let resizeHandler: (event: MouseEvent) => void;
 
-    switch ((event.target as HTMLElement).id) {
-      case "top":
-        resizeHandler = handleResizeTop;
-        break;
-      case "right":
-        resizeHandler = handleResizeRight;
-        break;
-      case "bottom":
-        resizeHandler = handleResizeBottom;
-        break;
-      case "left":
-        resizeHandler = handleResizeLeft;
-        break;
-      case "top-left":
-        resizeHandler = handleResizeTopLeft;
-        break;
-      case "top-right":
-        resizeHandler = handleResizeTopRight;
-        break;
-      case "bottom-right":
-        resizeHandler = handleResizeBottomRight;
-        break;
-      case "bottom-left":
-        resizeHandler = handleResizeBottomLeft;
-        break;
-      default:
-        resizeHandler = () => {};
-        break;
-    }
+    if (event.button == 0) {
+      switch ((event.target as HTMLElement).id) {
+        case "top":
+          resizeHandler = handleResizeTop;
+          break;
+        case "right":
+          resizeHandler = handleResizeRight;
+          break;
+        case "bottom":
+          resizeHandler = handleResizeBottom;
+          break;
+        case "left":
+          resizeHandler = handleResizeLeft;
+          break;
+        case "top-left":
+          resizeHandler = handleResizeTopLeft;
+          break;
+        case "top-right":
+          resizeHandler = handleResizeTopRight;
+          break;
+        case "bottom-right":
+          resizeHandler = handleResizeBottomRight;
+          break;
+        case "bottom-left":
+          resizeHandler = handleResizeBottomLeft;
+          break;
+        default:
+          resizeHandler = () => {};
+          break;
+      }
 
-    lastPos.current = { x: event.clientX, y: event.clientY };
-    document.addEventListener("mousemove", resizeHandler);
-    document.addEventListener("mouseup", () =>
-      handleResizeMouseUp(resizeHandler)
-    );
+      lastPos.current = { x: event.clientX, y: event.clientY };
+      document.addEventListener("mousemove", resizeHandler);
+      document.addEventListener("mouseup", () =>
+        handleResizeMouseUp(resizeHandler)
+      );
+    }
   };
 
   return (
@@ -223,10 +241,14 @@ const CanvasObjectComponent: React.FC<ICanvasObjectProps> = (props) => {
       <div
         className="absolute"
         style={{
-          left: props.object.x,
-          top: props.object.y,
-          width: props.object.width,
-          height: props.object.height,
+          left:
+            props.object.x * props.canvasTransform.scale +
+            props.canvasTransform.offsetX,
+          top:
+            props.object.y * props.canvasTransform.scale +
+            props.canvasTransform.offsetY,
+          width: props.object.width * props.canvasTransform.scale,
+          height: props.object.height * props.canvasTransform.scale,
         }}
       >
         <div

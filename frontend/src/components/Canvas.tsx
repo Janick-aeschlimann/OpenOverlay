@@ -1,23 +1,27 @@
 import { useEffect, useRef, useState } from "react";
 import { Button } from "./shadcn/ui/button";
 import { useAuthStore } from "@/store/auth";
-import { MousePointer2, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useParams } from "react-router-dom";
 import CanvasObjectComponent from "./CanvasObject";
 import type { YMap } from "node_modules/yjs/dist/src/types/YMap";
 import { useCanvasStore } from "@/store/canvas";
 import { CanvasSync } from "@/lib/yjsSync";
 import type { CanvasObject } from "@/types/types";
+import CanvasClient from "./CanvasClient";
 
 const Canvas: React.FC = () => {
   const [count, setCount] = useState(0);
 
   const {
     canvasObjects,
+    canvasTransform,
     updateCanvasObject,
     addCanvasObject,
     deleteCanvasObject,
+    setCanvasTransform,
   } = useCanvasStore();
+  const lastPos = useRef<{ x: number; y: number } | null>(null);
 
   const [clients, setClients] = useState<any[]>([]);
   const user = useAuthStore().user;
@@ -51,27 +55,6 @@ const Canvas: React.FC = () => {
     return userColors[index];
   };
 
-  const throttle = <T extends (...args: any[]) => void>(
-    func: T,
-    delay: number
-  ): T => {
-    let lastCall = 0;
-    return function (...args: Parameters<T>) {
-      const now = Date.now();
-      if (now - lastCall >= delay) {
-        lastCall = now;
-        func(...args);
-      }
-    } as T;
-  };
-
-  const updateCursor = (event: PointerEvent) => {
-    canvasSyncRef.current?.provider.awareness.setLocalStateField("cursor", {
-      x: event.clientX,
-      y: event.clientY,
-    });
-  };
-
   useEffect(() => {
     const connect = async () => {
       const canvasSync = await CanvasSync.create(canvasId || "1");
@@ -89,8 +72,6 @@ const Canvas: React.FC = () => {
 
       const awareness = provider.awareness;
 
-      document.addEventListener("pointermove", throttle(updateCursor, 0));
-
       awareness.on("change", () => {
         const states = Array.from(awareness.getStates().entries());
         setClients(
@@ -100,18 +81,7 @@ const Canvas: React.FC = () => {
         );
       });
 
-      const ymap = canvasSync.ydoc.getMap("counter");
-      ymapRef.current = ymap;
-
-      const updateCount = () => {
-        setCount(ymap.get("value") as number);
-      };
-
-      ymap.observe(updateCount);
-      updateCount();
-
       document.addEventListener("keydown", (event: KeyboardEvent) => {
-        console.log(event);
         if (event.code == "Delete") {
           const state = useCanvasStore.getState();
           if (state.selectedCanvasObjectId) {
@@ -136,40 +106,170 @@ const Canvas: React.FC = () => {
     });
   }, [user]);
 
-  const increment = () => {
-    const ymap = ymapRef.current;
-    ymap?.set("value", ((ymap?.get("value") as number) || 0) + 1);
+  const handleMouseMove = (event: MouseEvent) => {
+    if (lastPos.current) {
+      const transform = useCanvasStore.getState().canvasTransform;
+
+      const dx = lastPos.current.x - event.clientX;
+      const dy = lastPos.current.y - event.clientY;
+
+      const offsetX = transform.offsetX - dx;
+      const offsetY = transform.offsetY - dy;
+
+      setCanvasTransform(canvasSyncRef.current, {
+        ...transform,
+        offsetX: offsetX,
+        offsetY: offsetY,
+        isDragging: true,
+      });
+      lastPos.current = { x: event.clientX, y: event.clientY };
+    }
+  };
+
+  const handleMouseUp = () => {
+    const canvas = document.getElementById("canvas");
+    canvas?.removeEventListener("pointermove", handleMouseMove);
+    canvas?.removeEventListener("pointerup", handleMouseUp);
+
+    const transform = useCanvasStore.getState().canvasTransform;
+
+    setCanvasTransform(canvasSyncRef.current, {
+      ...transform,
+      isDragging: false,
+    });
+  };
+
+  const handleMouseDown = (event: React.MouseEvent) => {
+    const canvas = document.getElementById("canvas");
+    if (event.button == 1 && canvas) {
+      lastPos.current = { x: event.clientX, y: event.clientY };
+      canvas.addEventListener("pointermove", handleMouseMove);
+      canvas.addEventListener("pointerup", handleMouseUp);
+    }
+  };
+
+  const handleMouseWheel = (event: React.WheelEvent) => {
+    const transform = useCanvasStore.getState().canvasTransform;
+
+    const scaleFactor = 1.1;
+    const scale =
+      event.deltaY < 0
+        ? transform.scale * scaleFactor
+        : transform.scale / scaleFactor;
+
+    const { screenX, screenY } = mouseToScreen(event.clientX, event.clientY);
+
+    const worldX = (screenX - transform.offsetX) / transform.scale;
+    const worldY = (screenY - transform.offsetY) / transform.scale;
+
+    console.log("oldWorld: " + worldX + ", " + worldY);
+
+    const offsetX = screenX - worldX * scale;
+    const offsetY = screenY - worldY * scale;
+
+    setCanvasTransform(canvasSyncRef.current, {
+      ...transform,
+      scale: scale,
+      offsetX: offsetX,
+      offsetY: offsetY,
+    });
+  };
+
+  const screenToWorld = (screenX: number, screenY: number) => {
+    const transform = useCanvasStore.getState().canvasTransform;
+
+    const worldX = (screenX - transform.offsetX) / transform.scale;
+    const worldY = (screenY - transform.offsetY) / transform.scale;
+
+    return { worldX: worldX, worldY: worldY };
+  };
+
+  const mouseToScreen = (x: number, y: number) => {
+    const canvas = document.getElementById("canvas");
+
+    if (canvas) {
+      const rect = canvas.getBoundingClientRect();
+
+      const screenX = x - rect.left;
+      const screenY = y - rect.top;
+
+      return { screenX: screenX, screenY: screenY };
+    } else {
+      return { screenX: x, screenY: y };
+    }
+  };
+
+  const mouseToWorld = (x: number, y: number) => {
+    const { screenX, screenY } = mouseToScreen(x, y);
+    const { worldX, worldY } = screenToWorld(screenX, screenY);
+    return { worldX: worldX, worldY: worldY };
+  };
+
+  const updateCursorMove = (event: React.PointerEvent) => {
+    const transform = useCanvasStore.getState().canvasTransform;
+
+    const { worldX, worldY } = mouseToWorld(event.clientX, event.clientY);
+
+    setCanvasTransform(canvasSyncRef.current, {
+      ...transform,
+      mouseX: worldX,
+      mouseY: worldY,
+    });
   };
 
   return (
     <>
       <div className="h-full flex flex-col gap-2 items-center justify-center overflow-hidden select-none">
-        <Button onClick={increment}>Increment</Button>
-        <p>Count: {count}</p>
         {error ? <p className="text-red-500">{error}</p> : null}
-        {clients.map((client, index) => (
-          <div
-            key={index}
-            className="absolute z-50"
-            style={{ left: client.cursor?.x || 0, top: client.cursor?.y || 0 }}
-          >
-            <MousePointer2
-              style={{ fill: client.user?.color, color: client.user?.color }}
-            />
-            <p style={{ color: client.user?.color }}>{client.user?.username}</p>
+
+        <div
+          id="canvas"
+          className="bg-neutral-800 rounded-xl overflow-hidden relative"
+          style={{
+            cursor: canvasTransform.isDragging ? "grab" : "default",
+            width: "calc(100% - 50px)",
+            height: "calc(100% - 150px)",
+          }}
+          onPointerDown={handleMouseDown}
+          onPointerMove={updateCursorMove}
+          onWheel={handleMouseWheel}
+        >
+          {clients.map((client, index) => {
+            if (client.user && client.cursor) {
+              return (
+                <CanvasClient
+                  key={index}
+                  cursor={client.cursor}
+                  user={client.user}
+                  canvasTransform={canvasTransform}
+                ></CanvasClient>
+              );
+            }
+          })}
+          {canvasObjects.map((object) => (
+            <CanvasObjectComponent
+              key={object.id}
+              object={object}
+              canvasTransform={canvasTransform}
+              setCanvasObject={(object: CanvasObject) => {
+                if (canvasSyncRef.current) {
+                  updateCanvasObject(canvasSyncRef.current, object);
+                }
+              }}
+            ></CanvasObjectComponent>
+          ))}
+          <div className="absolute left-2 bottom-1 flex flex-row gap-5 text-neutral-300 font-semibold">
+            <span>
+              Mouse: {Math.round(canvasTransform.mouseX)} /{" "}
+              {Math.round(canvasTransform.mouseY)}
+            </span>
+            <span>
+              Offset: {Math.round(canvasTransform.offsetX)} /{" "}
+              {Math.round(canvasTransform.offsetY)}
+            </span>
+            <span>Scale: {canvasTransform.scale.toFixed(2)}</span>
           </div>
-        ))}
-        {canvasObjects.map((object) => (
-          <CanvasObjectComponent
-            key={object.id}
-            object={object}
-            setCanvasObject={(object: CanvasObject) => {
-              if (canvasSyncRef.current) {
-                updateCanvasObject(canvasSyncRef.current, object);
-              }
-            }}
-          ></CanvasObjectComponent>
-        ))}
+        </div>
         <Button
           className="absolute top-3 right-3 cursor-pointer"
           size={"icon"}

@@ -1,18 +1,31 @@
 import type { CanvasSync } from "@/lib/yjsSync";
-import type { CanvasObject } from "@/types/types";
+import type { CanvasObject, CanvasTransform } from "@/types/types";
 import { create } from "zustand";
 
 export const useCanvasStore = create<{
   canvasObjects: CanvasObject[];
   selectedCanvasObjectId: string | null;
+  canvasTransform: CanvasTransform;
   setCanvasObjects: (objects: CanvasObject[]) => void;
   updateCanvasObject: (canvasSync: CanvasSync, newObject: CanvasObject) => void;
   addCanvasObject: (canvasSync: CanvasSync, newObject?: CanvasObject) => void;
   deleteCanvasObject: (canvasSync: CanvasSync, canvasObjectId: string) => void;
   setSelectedCanvasObjectId: (canvasObjectId: string) => void;
-}>((set) => ({
+  setCanvasTransform: (
+    canvasSync: CanvasSync | null,
+    transform: CanvasTransform
+  ) => void;
+}>((set, get) => ({
   canvasObjects: [],
   selectedCanvasObjectId: null,
+  canvasTransform: {
+    offsetX: 0,
+    offsetY: 0,
+    scale: 1,
+    isDragging: false,
+    mouseX: 0,
+    mouseY: 0,
+  },
   setCanvasObjects: (objects) => set({ canvasObjects: objects }),
   updateCanvasObject: (canvasSync, newObject) => {
     const id = newObject.id;
@@ -54,4 +67,11 @@ export const useCanvasStore = create<{
   },
   setSelectedCanvasObjectId: (canvasObjectId) =>
     set({ selectedCanvasObjectId: canvasObjectId }),
+  setCanvasTransform: (canvasSync, transform) => {
+    const { mouseX, mouseY } = get().canvasTransform;
+    if (mouseX !== transform.mouseX || mouseY !== transform.mouseY) {
+      canvasSync?.syncCursorToYjs(transform);
+    }
+    set({ canvasTransform: transform });
+  },
 }));

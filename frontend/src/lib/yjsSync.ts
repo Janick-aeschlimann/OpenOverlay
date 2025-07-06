@@ -1,5 +1,5 @@
 import { useCanvasStore } from "@/store/canvas";
-import type { CanvasObject } from "@/types/types";
+import type { CanvasObject, CanvasTransform } from "@/types/types";
 import { WebsocketProvider } from "y-websocket";
 import Session from "supertokens-web-js/recipe/session";
 import * as Y from "yjs";
@@ -66,6 +66,13 @@ export class CanvasSync {
       .toArray()
       .findIndex((yobject) => yobject.get("id") == canvasObjectId);
     this.yarray.delete(index, 1);
+  };
+
+  syncCursorToYjs = (canvasTransform: CanvasTransform) => {
+    this.provider.awareness.setLocalStateField("cursor", {
+      x: canvasTransform.mouseX,
+      y: canvasTransform.mouseY,
+    });
   };
 
   private mapCanvasObject = (y: Y.Map<any>): CanvasObject => {

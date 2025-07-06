@@ -23,3 +23,12 @@ export interface CanvasObject {
   height: number;
   rotation: number;
 }
+
+export interface CanvasTransform {
+  offsetX: number;
+  offsetY: number;
+  scale: number;
+  isDragging: boolean;
+  mouseX: number;
+  mouseY: number;
+}
