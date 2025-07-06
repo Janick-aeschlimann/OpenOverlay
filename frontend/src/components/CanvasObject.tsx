@@ -1,11 +1,13 @@
 import { useCanvasStore } from "@/store/canvas";
 import type { CanvasObject, CanvasTransform } from "@/types/types";
 import { useRef } from "react";
+import * as Y from "yjs";
 
 export interface ICanvasObjectProps {
   object: CanvasObject;
   canvasTransform: CanvasTransform;
   setCanvasObject: (object: CanvasObject) => void;
+  undoManager?: Y.UndoManager;
 }
 
 const CanvasObjectComponent: React.FC<ICanvasObjectProps> = (props) => {
@@ -47,6 +49,7 @@ const CanvasObjectComponent: React.FC<ICanvasObjectProps> = (props) => {
   const handleMouseUp = () => {
     document.removeEventListener("mousemove", handleMouseMove);
     document.removeEventListener("mouseup", handleMouseMove);
+    props.undoManager?.stopCapturing();
   };
 
   const handleResizeTop = (event: MouseEvent) => {
@@ -192,6 +195,7 @@ const CanvasObjectComponent: React.FC<ICanvasObjectProps> = (props) => {
   const handleResizeMouseUp = (resizeHandler: (event: MouseEvent) => void) => {
     document.removeEventListener("mousemove", resizeHandler);
     document.removeEventListener("mouseup", handleMouseMove);
+    props.undoManager?.stopCapturing();
   };
 
   const handleResizeMouseDown = (event: React.MouseEvent) => {

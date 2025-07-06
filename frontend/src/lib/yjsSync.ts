@@ -8,11 +8,13 @@ export class CanvasSync {
   public provider: WebsocketProvider;
   public ydoc: Y.Doc;
   public yarray: Y.Array<Y.Map<any>>;
+  public undoManager: Y.UndoManager;
 
   constructor(provider: WebsocketProvider, ydoc: Y.Doc) {
     this.provider = provider;
     this.ydoc = ydoc;
     this.yarray = ydoc.getArray<Y.Map<any>>("objects");
+    this.undoManager = new Y.UndoManager(this.yarray, { captureTimeout: 1000 });
 
     const state = useCanvasStore.getState();
     state.setCanvasObjects(this.yarray.toArray().map(this.mapCanvasObject));

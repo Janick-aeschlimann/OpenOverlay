@@ -82,6 +82,15 @@ const Canvas: React.FC = () => {
           const state = useCanvasStore.getState();
           if (state.selectedCanvasObjectId) {
             deleteCanvasObject(canvasSync, state.selectedCanvasObjectId);
+            canvasSync.undoManager.stopCapturing();
+          }
+        }
+        console.log(event);
+        if ((event.key == "z" || event.key == "Z") && event.ctrlKey) {
+          if (event.shiftKey) {
+            canvasSync.undoManager.redo();
+          } else {
+            canvasSync.undoManager.undo();
           }
         }
       });
@@ -252,6 +261,7 @@ const Canvas: React.FC = () => {
                   updateCanvasObject(canvasSyncRef.current, object);
                 }
               }}
+              undoManager={canvasSyncRef.current?.undoManager}
             ></CanvasObjectComponent>
           ))}
           <div className="absolute left-2 bottom-1 flex flex-row gap-5 text-neutral-300 font-semibold">
