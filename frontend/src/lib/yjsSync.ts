@@ -1,4 +1,4 @@
-import { useCanvasStore } from "@/store/canvas";
+import { createCanvasStore, getCanvasStore } from "@/store/canvas";
 import type { CanvasObject, CanvasTransform } from "@/types/types";
 import { WebsocketProvider } from "y-websocket";
 import Session from "supertokens-web-js/recipe/session";
@@ -9,18 +9,24 @@ export class CanvasSync {
   public ydoc: Y.Doc;
   public yarray: Y.Array<Y.Map<any>>;
   public undoManager: Y.UndoManager;
+  public canvasStore: ReturnType<typeof createCanvasStore>;
 
-  constructor(provider: WebsocketProvider, ydoc: Y.Doc) {
+  constructor(
+    provider: WebsocketProvider,
+    ydoc: Y.Doc,
+    canvasStore: ReturnType<typeof createCanvasStore>
+  ) {
     this.provider = provider;
     this.ydoc = ydoc;
     this.yarray = ydoc.getArray<Y.Map<any>>("objects");
     this.undoManager = new Y.UndoManager(this.yarray, { captureTimeout: 1000 });
+    this.canvasStore = canvasStore;
 
-    const state = useCanvasStore.getState();
+    const state = this.canvasStore.getState();
     state.setCanvasObjects(this.yarray.toArray().map(this.mapCanvasObject));
   }
 
-  static async create(canvasId: string): Promise<CanvasSync> {
+  static async create(canvasId: number): Promise<CanvasSync> {
     const accessToken = (await Session.getAccessToken()) || "";
     const ydoc = new Y.Doc();
 
@@ -31,12 +37,14 @@ export class CanvasSync {
       { params: { yauth: accessToken } }
     );
 
-    return new CanvasSync(provider, ydoc);
+    const canvasStore = getCanvasStore(canvasId);
+
+    return new CanvasSync(provider, ydoc, canvasStore);
   }
 
   syncToLocal = () => {
     this.yarray.observeDeep(() => {
-      const state = useCanvasStore.getState();
+      const state = this.canvasStore.getState();
       state.setCanvasObjects(this.yarray.toArray().map(this.mapCanvasObject));
     });
   };

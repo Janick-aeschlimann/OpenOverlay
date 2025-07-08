@@ -1,23 +1,36 @@
 import { useEffect, useRef, useState } from "react";
-import { Button } from "../shadcn/ui/button";
 import { useAuthStore } from "@/store/auth";
-import { ArrowLeft, Plus } from "lucide-react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import CanvasObjectComponent from "@/components/Canvas/CanvasObject";
-import { useCanvasStore } from "@/store/canvas";
+import { getCanvasStore, useCanvasStore } from "@/store/canvas";
 import { CanvasSync } from "@/lib/yjsSync";
-import type { CanvasObject } from "@/types/types";
+import type { CanvasDraft, CanvasObject } from "@/types/types";
 import CanvasClient from "@/components/Canvas/CanvasClient";
+import { cn } from "@/lib/utils";
+import CanvasDraftComponent from "./CanvasDraft";
 
-const Canvas: React.FC = () => {
+export interface ICanvasProps {
+  className?: string;
+}
+
+const Canvas: React.FC<ICanvasProps> = (props) => {
+  const overlayId = parseInt(useParams().id!);
+
   const {
     canvasObjects,
     canvasTransform,
+    presence,
+    canvasDraft,
     updateCanvasObject,
     addCanvasObject,
     deleteCanvasObject,
     setCanvasTransform,
-  } = useCanvasStore();
+    setTool,
+    setCanvasDraft,
+  } = useCanvasStore(overlayId);
+
+  const canvasStore = getCanvasStore(overlayId);
+
   const lastPos = useRef<{ x: number; y: number } | null>(null);
 
   const [clients, setClients] = useState<any[]>([]);
@@ -27,34 +40,9 @@ const Canvas: React.FC = () => {
 
   const canvasSyncRef = useRef<CanvasSync>(null);
 
-  const navigate = useNavigate();
-  const canvasId = useParams().id;
-
-  const userColors = [
-    "#FF4C4C", // Vivid Red
-    "#FF9F1C", // Orange
-    "#FFD23F", // Bright Yellow
-    "#3DFA7E", // Neon Green
-    "#2EC4B6", // Aqua Teal
-    "#00CFFF", // Cyan
-    "#4F9DFF", // Sky Blue
-    "#845EC2", // Soft Purple
-    "#D65DB1", // Pink-Magenta
-    "#FF6F91", // Watermelon Pink
-    "#FF3CAC", // Hot Pink
-    "#F5A623", // Warm Amber
-    "#00FFAB", // Mint Neon
-  ];
-
-  // Function to get a random color
-  const getRandomColor = () => {
-    const index = Math.floor(Math.random() * userColors.length);
-    return userColors[index];
-  };
-
   useEffect(() => {
     const connect = async () => {
-      const canvasSync = await CanvasSync.create(canvasId || "1");
+      const canvasSync = await CanvasSync.create(overlayId);
       canvasSync.syncToLocal();
       canvasSyncRef.current = canvasSync;
 
@@ -80,13 +68,12 @@ const Canvas: React.FC = () => {
 
       document.addEventListener("keydown", (event: KeyboardEvent) => {
         if (event.code == "Delete") {
-          const state = useCanvasStore.getState();
+          const state = canvasStore.getState();
           if (state.selectedCanvasObjectId) {
             deleteCanvasObject(canvasSync, state.selectedCanvasObjectId);
             canvasSync.undoManager.stopCapturing();
           }
         }
-        console.log(event);
         if ((event.key == "z" || event.key == "Z") && event.ctrlKey) {
           if (event.shiftKey) {
             canvasSync.undoManager.redo();
@@ -105,16 +92,17 @@ const Canvas: React.FC = () => {
   }, []);
 
   useEffect(() => {
+    const state = canvasStore.getState();
     canvasSyncRef.current?.provider.awareness.setLocalStateField("user", {
       userId: user?.userId,
       username: user?.username,
-      color: getRandomColor(),
+      color: state.presence.color,
     });
   }, [user]);
 
   const handleMouseMove = (event: MouseEvent) => {
     if (lastPos.current) {
-      const transform = useCanvasStore.getState().canvasTransform;
+      const transform = canvasStore.getState().canvasTransform;
 
       const dx = lastPos.current.x - event.clientX;
       const dy = lastPos.current.y - event.clientY;
@@ -137,7 +125,7 @@ const Canvas: React.FC = () => {
     canvas?.removeEventListener("pointermove", handleMouseMove);
     canvas?.removeEventListener("pointerup", handleMouseUp);
 
-    const transform = useCanvasStore.getState().canvasTransform;
+    const transform = getCanvasStore(overlayId).getState().canvasTransform;
 
     setCanvasTransform(canvasSyncRef.current, {
       ...transform,
@@ -155,7 +143,7 @@ const Canvas: React.FC = () => {
   };
 
   const handleMouseWheel = (event: React.WheelEvent) => {
-    const transform = useCanvasStore.getState().canvasTransform;
+    const transform = canvasStore.getState().canvasTransform;
 
     const scaleFactor = 1.1;
     const scale =
@@ -167,8 +155,6 @@ const Canvas: React.FC = () => {
 
     const worldX = (screenX - transform.offsetX) / transform.scale;
     const worldY = (screenY - transform.offsetY) / transform.scale;
-
-    console.log("oldWorld: " + worldX + ", " + worldY);
 
     const offsetX = screenX - worldX * scale;
     const offsetY = screenY - worldY * scale;
@@ -182,7 +168,7 @@ const Canvas: React.FC = () => {
   };
 
   const screenToWorld = (screenX: number, screenY: number) => {
-    const transform = useCanvasStore.getState().canvasTransform;
+    const transform = canvasStore.getState().canvasTransform;
 
     const worldX = (screenX - transform.offsetX) / transform.scale;
     const worldY = (screenY - transform.offsetY) / transform.scale;
@@ -212,7 +198,7 @@ const Canvas: React.FC = () => {
   };
 
   const updateCursorMove = (event: React.PointerEvent) => {
-    const transform = useCanvasStore.getState().canvasTransform;
+    const transform = canvasStore.getState().canvasTransform;
 
     const { worldX, worldY } = mouseToWorld(event.clientX, event.clientY);
 
@@ -223,81 +209,135 @@ const Canvas: React.FC = () => {
     });
   };
 
+  const creatorMouseDown = (event: React.MouseEvent) => {
+    const canvas = document.getElementById("canvas");
+    if (event.button == 0 && canvas) {
+      const state = canvasStore.getState();
+
+      const newCanvasDraft: CanvasDraft = {
+        x: state.canvasTransform.mouseX,
+        y: state.canvasTransform.mouseY,
+        width: 0,
+        height: 0,
+        type: "rectangle",
+      };
+
+      setCanvasDraft(newCanvasDraft);
+
+      lastPos.current = { x: event.clientX, y: event.clientY };
+
+      canvas.addEventListener("pointermove", creatorMouseMove);
+      canvas.addEventListener("pointerup", creatorMouseUp);
+    }
+  };
+
+  const creatorMouseMove = (event: MouseEvent) => {
+    const canvasDraft = canvasStore.getState().canvasDraft;
+
+    if (lastPos.current && canvasDraft) {
+      const dx = (event.clientX - lastPos.current.x) / canvasTransform.scale;
+      const dy = (event.clientY - lastPos.current.y) / canvasTransform.scale;
+
+      const width = canvasDraft.width + dx;
+      const height = canvasDraft.height + dy;
+
+      setCanvasDraft({ ...canvasDraft, width: width, height: height });
+      lastPos.current = { x: event.clientX, y: event.clientY };
+    }
+  };
+
+  const creatorMouseUp = () => {
+    const canvas = document.getElementById("canvas");
+    if (canvas) {
+      setTool(0);
+      canvas.removeEventListener("pointermove", creatorMouseMove);
+      canvas.removeEventListener("pointerup", creatorMouseUp);
+
+      const canvasDraft = canvasStore.getState().canvasDraft;
+      if (canvasDraft && canvasSyncRef.current) {
+        const newCanvasObject: CanvasObject = {
+          id: "",
+          x: canvasDraft.x,
+          y: canvasDraft.y,
+          width: canvasDraft.width,
+          height: canvasDraft.height,
+          rotation: 0,
+        };
+        addCanvasObject(canvasSyncRef.current, newCanvasObject);
+      }
+      setCanvasDraft(null);
+    }
+  };
+
   return (
     <>
-      <div className="h-full flex flex-col gap-2 items-center justify-center overflow-hidden select-none">
-        {error ? <p className="text-red-500">{error}</p> : null}
-
+      <div
+        id="canvas"
+        className={cn(
+          "bg-[#202020] overflow-hidden relative h-full w-full",
+          props.className
+        )}
+        onPointerDown={handleMouseDown}
+        onPointerMove={updateCursorMove}
+        onWheel={handleMouseWheel}
+      >
         <div
-          id="canvas"
-          className="bg-neutral-800 rounded-xl overflow-hidden relative"
+          className="absolute h-full w-full bg-transparent z-40"
           style={{
-            cursor: canvasTransform.isDragging ? "grab" : "default",
-            width: "calc(100% - 50px)",
-            height: "calc(100% - 150px)",
+            pointerEvents:
+              presence.cursor.toolIndex != 0 || canvasTransform.isDragging
+                ? "auto"
+                : "none",
+            cursor: canvasTransform.isDragging
+              ? "grab"
+              : presence.cursor.toolIndex == 0
+              ? "default"
+              : "crosshair",
           }}
-          onPointerDown={handleMouseDown}
-          onPointerMove={updateCursorMove}
-          onWheel={handleMouseWheel}
-        >
-          {clients.map((client, index) => {
-            if (client.user && client.cursor) {
-              return (
-                <CanvasClient
-                  key={index}
-                  cursor={client.cursor}
-                  user={client.user}
-                  canvasTransform={canvasTransform}
-                ></CanvasClient>
-              );
-            }
-          })}
-          {canvasObjects.map((object) => (
-            <CanvasObjectComponent
-              key={object.id}
-              object={object}
-              canvasTransform={canvasTransform}
-              setCanvasObject={(object: CanvasObject) => {
-                if (canvasSyncRef.current) {
-                  updateCanvasObject(canvasSyncRef.current, object);
-                }
-              }}
-              undoManager={canvasSyncRef.current?.undoManager}
-            ></CanvasObjectComponent>
-          ))}
-          <div className="absolute left-2 bottom-1 flex flex-row gap-5 text-neutral-300 font-semibold">
-            <span>
-              Mouse: {Math.round(canvasTransform.mouseX)} /{" "}
-              {Math.round(canvasTransform.mouseY)}
-            </span>
-            <span>
-              Offset: {Math.round(canvasTransform.offsetX)} /{" "}
-              {Math.round(canvasTransform.offsetY)}
-            </span>
-            <span>Scale: {canvasTransform.scale.toFixed(2)}</span>
-          </div>
+          onMouseDown={creatorMouseDown}
+        ></div>
+        {clients.map((client, index) => {
+          if (client.user && client.cursor) {
+            return (
+              <CanvasClient
+                key={index}
+                cursor={client.cursor}
+                user={client.user}
+                canvasTransform={canvasTransform}
+              ></CanvasClient>
+            );
+          }
+        })}
+        {canvasObjects.map((object) => (
+          <CanvasObjectComponent
+            key={object.id}
+            object={object}
+            canvasTransform={canvasTransform}
+            setCanvasObject={(object: CanvasObject) => {
+              if (canvasSyncRef.current) {
+                updateCanvasObject(canvasSyncRef.current, object);
+              }
+            }}
+            undoManager={canvasSyncRef.current?.undoManager}
+            overlayId={overlayId}
+          ></CanvasObjectComponent>
+        ))}
+        <CanvasDraftComponent
+          canvasDraft={canvasDraft}
+          canvasTransform={canvasTransform}
+        />
+        <div className="absolute left-2 bottom-1 flex flex-row gap-5 text-neutral-300 font-semibold">
+          <span>
+            Mouse: {Math.round(canvasTransform.mouseX)} /{" "}
+            {Math.round(canvasTransform.mouseY)}
+          </span>
+          <span>
+            Offset: {Math.round(canvasTransform.offsetX)} /{" "}
+            {Math.round(canvasTransform.offsetY)}
+          </span>
+          <span>Scale: {canvasTransform.scale.toFixed(2)}</span>
+          {error && <span className="text-red-500">{error}</span>}
         </div>
-        <Button
-          className="absolute top-3 right-3 cursor-pointer"
-          size={"icon"}
-          onClick={() => {
-            if (canvasSyncRef.current) {
-              addCanvasObject(canvasSyncRef.current);
-            }
-          }}
-        >
-          <Plus />
-        </Button>
-        <Button
-          className="absolute top-3 left-3 cursor-pointer"
-          size={"default"}
-          onClick={() => {
-            navigate(-1);
-          }}
-        >
-          <ArrowLeft />
-          Back
-        </Button>
       </div>
     </>
   );

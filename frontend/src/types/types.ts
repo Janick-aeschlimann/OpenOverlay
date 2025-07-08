@@ -24,6 +24,14 @@ export interface CanvasObject {
   rotation: number;
 }
 
+export interface CanvasDraft {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  type: "rectangle" | "ellipsis" | "line";
+}
+
 export interface CanvasTransform {
   offsetX: number;
   offsetY: number;

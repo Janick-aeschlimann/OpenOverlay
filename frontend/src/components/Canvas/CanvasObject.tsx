@@ -8,6 +8,7 @@ export interface ICanvasObjectProps {
   canvasTransform: CanvasTransform;
   setCanvasObject: (object: CanvasObject) => void;
   undoManager?: Y.UndoManager;
+  overlayId: number;
 }
 
 const CanvasObjectComponent: React.FC<ICanvasObjectProps> = (props) => {
@@ -16,8 +17,9 @@ const CanvasObjectComponent: React.FC<ICanvasObjectProps> = (props) => {
   const minWidth = 100;
   const minHeight = 100;
 
-  const { selectedCanvasObjectId, setSelectedCanvasObjectId } =
-    useCanvasStore();
+  const { selectedCanvasObjectId, setSelectedCanvasObjectId } = useCanvasStore(
+    props.overlayId
+  );
 
   const handleMouseMove = (event: MouseEvent) => {
     if (lastPos.current) {
