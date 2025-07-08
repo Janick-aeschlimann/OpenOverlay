@@ -25,8 +25,8 @@ jobs:
 
       - name: Copy Project Files to Server
         run: |
-          rsync -avz --delete --exclude '.git' --exclude 'node_modules' -e "ssh -p ${{ secrets.SSH_PORT }}" ./ \
-          ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ secrets.TARGET_DIR }}
+          rsync -avz --exclude '.git' --exclude 'node_modules' -e "ssh -p ${{ secrets.SSH_PORT }}" ./ \
+            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ secrets.TARGET_DIR }}
 
       - name: Deploy via SSH
         run: |
