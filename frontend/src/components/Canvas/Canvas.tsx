@@ -3,7 +3,6 @@ import { useAuthStore } from "@/store/auth";
 import { useParams } from "react-router-dom";
 import CanvasObjectComponent from "@/components/Canvas/CanvasObject";
 import { getCanvasStore, useCanvasStore } from "@/store/canvas";
-import { CanvasSync } from "@/lib/yjsSync";
 import type { CanvasDraft, CanvasObject } from "@/types/types";
 import CanvasClient from "@/components/Canvas/CanvasClient";
 import { cn } from "@/lib/utils";
@@ -17,10 +16,13 @@ const Canvas: React.FC<ICanvasProps> = (props) => {
   const overlayId = parseInt(useParams().id!);
 
   const {
+    connection,
+    canvas,
     canvasObjects,
     canvasTransform,
     presence,
     canvasDraft,
+    connectYjs,
     updateCanvasObject,
     addCanvasObject,
     deleteCanvasObject,
@@ -36,25 +38,11 @@ const Canvas: React.FC<ICanvasProps> = (props) => {
   const [clients, setClients] = useState<any[]>([]);
   const user = useAuthStore().user;
 
-  const [error, setError] = useState<string | null>(null);
-
-  const canvasSyncRef = useRef<CanvasSync>(null);
-
   useEffect(() => {
     const connect = async () => {
-      const canvasSync = await CanvasSync.create(overlayId);
-      canvasSync.syncToLocal();
-      canvasSyncRef.current = canvasSync;
+      const canvasSync = await connectYjs(overlayId);
 
       const provider = canvasSync.provider;
-
-      provider.ws?.addEventListener("close", (event: any) => {
-        if (event.code == 403) {
-          setError(event.code + " " + event.reason);
-          provider.shouldConnect = false;
-        }
-      });
-
       const awareness = provider.awareness;
 
       awareness.on("change", () => {
@@ -70,7 +58,7 @@ const Canvas: React.FC<ICanvasProps> = (props) => {
         if (event.code == "Delete") {
           const state = canvasStore.getState();
           if (state.selectedCanvasObjectId) {
-            deleteCanvasObject(canvasSync, state.selectedCanvasObjectId);
+            deleteCanvasObject(state.selectedCanvasObjectId);
             canvasSync.undoManager.stopCapturing();
           }
         }
@@ -87,13 +75,14 @@ const Canvas: React.FC<ICanvasProps> = (props) => {
     connect();
 
     return () => {
-      canvasSyncRef.current?.destroy();
+      const connection = canvasStore.getState().connection;
+      connection.canvasSync?.destroy();
     };
   }, []);
 
   useEffect(() => {
     const state = canvasStore.getState();
-    canvasSyncRef.current?.provider.awareness.setLocalStateField("user", {
+    state.connection.canvasSync?.provider.awareness.setLocalStateField("user", {
       userId: user?.userId,
       username: user?.username,
       color: state.presence.color,
@@ -110,7 +99,7 @@ const Canvas: React.FC<ICanvasProps> = (props) => {
       const offsetX = transform.offsetX - dx;
       const offsetY = transform.offsetY - dy;
 
-      setCanvasTransform(canvasSyncRef.current, {
+      setCanvasTransform({
         ...transform,
         offsetX: offsetX,
         offsetY: offsetY,
@@ -127,7 +116,7 @@ const Canvas: React.FC<ICanvasProps> = (props) => {
 
     const transform = getCanvasStore(overlayId).getState().canvasTransform;
 
-    setCanvasTransform(canvasSyncRef.current, {
+    setCanvasTransform({
       ...transform,
       isDragging: false,
     });
@@ -146,10 +135,15 @@ const Canvas: React.FC<ICanvasProps> = (props) => {
     const transform = canvasStore.getState().canvasTransform;
 
     const scaleFactor = 1.1;
-    const scale =
-      event.deltaY < 0
-        ? transform.scale * scaleFactor
-        : transform.scale / scaleFactor;
+    const scale = Math.max(
+      Math.min(
+        event.deltaY < 0
+          ? transform.scale * scaleFactor
+          : transform.scale / scaleFactor,
+        3
+      ),
+      0.1
+    );
 
     const { screenX, screenY } = mouseToScreen(event.clientX, event.clientY);
 
@@ -159,7 +153,7 @@ const Canvas: React.FC<ICanvasProps> = (props) => {
     const offsetX = screenX - worldX * scale;
     const offsetY = screenY - worldY * scale;
 
-    setCanvasTransform(canvasSyncRef.current, {
+    setCanvasTransform({
       ...transform,
       scale: scale,
       offsetX: offsetX,
@@ -202,7 +196,7 @@ const Canvas: React.FC<ICanvasProps> = (props) => {
 
     const { worldX, worldY } = mouseToWorld(event.clientX, event.clientY);
 
-    setCanvasTransform(canvasSyncRef.current, {
+    setCanvasTransform({
       ...transform,
       mouseX: worldX,
       mouseY: worldY,
@@ -254,7 +248,7 @@ const Canvas: React.FC<ICanvasProps> = (props) => {
       canvas.removeEventListener("pointerup", creatorMouseUp);
 
       const canvasDraft = canvasStore.getState().canvasDraft;
-      if (canvasDraft && canvasSyncRef.current) {
+      if (canvasDraft) {
         const newCanvasObject: CanvasObject = {
           id: "",
           x: canvasDraft.x,
@@ -263,7 +257,7 @@ const Canvas: React.FC<ICanvasProps> = (props) => {
           height: canvasDraft.height,
           rotation: 0,
         };
-        addCanvasObject(canvasSyncRef.current, newCanvasObject);
+        addCanvasObject(newCanvasObject);
       }
       setCanvasDraft(null);
     }
@@ -274,7 +268,7 @@ const Canvas: React.FC<ICanvasProps> = (props) => {
       <div
         id="canvas"
         className={cn(
-          "bg-[#202020] overflow-hidden relative h-full w-full",
+          "bg-[#171717] overflow-hidden relative h-full w-full",
           props.className
         )}
         onPointerDown={handleMouseDown}
@@ -314,19 +308,25 @@ const Canvas: React.FC<ICanvasProps> = (props) => {
             object={object}
             canvasTransform={canvasTransform}
             setCanvasObject={(object: CanvasObject) => {
-              if (canvasSyncRef.current) {
-                updateCanvasObject(canvasSyncRef.current, object);
-              }
+              updateCanvasObject(object);
             }}
-            undoManager={canvasSyncRef.current?.undoManager}
             overlayId={overlayId}
           ></CanvasObjectComponent>
         ))}
+        <div
+          className="absolute z-[0] bg-[#202020] border-neutral-700 border-1 rounded-md shadow-[0px_0px_40px_10px_rgba(0,_0,_0,_0.2)]"
+          style={{
+            left: 0 * canvasTransform.scale + canvasTransform.offsetX,
+            top: 0 * canvasTransform.scale + canvasTransform.offsetY,
+            width: canvas.width * canvasTransform.scale,
+            height: canvas.height * canvasTransform.scale,
+          }}
+        ></div>
         <CanvasDraftComponent
           canvasDraft={canvasDraft}
           canvasTransform={canvasTransform}
         />
-        <div className="absolute left-2 bottom-1 flex flex-row gap-5 text-neutral-300 font-semibold">
+        <div className="absolute left-2 bottom-1 flex flex-row gap-5 text-neutral-300 font-semibold z-50">
           <span>
             Mouse: {Math.round(canvasTransform.mouseX)} /{" "}
             {Math.round(canvasTransform.mouseY)}
@@ -336,7 +336,9 @@ const Canvas: React.FC<ICanvasProps> = (props) => {
             {Math.round(canvasTransform.offsetY)}
           </span>
           <span>Scale: {canvasTransform.scale.toFixed(2)}</span>
-          {error && <span className="text-red-500">{error}</span>}
+          {connection.error && (
+            <span className="text-red-500">{connection.error}</span>
+          )}
         </div>
       </div>
     </>

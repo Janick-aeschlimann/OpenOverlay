@@ -12,7 +12,7 @@ const Toolbar: React.FC<IToolbarProps> = (props) => {
     <>
       <div
         className={cn(
-          "rounded-[16px] border-2 border-[#505050] bg-[#1e1e1e] z-50 flex flex-col items-center justify-start gap-3 p-1",
+          "rounded-[16px] border-2 border-[#505050] bg-[#1e1e1ebb] backdrop-blur-xl z-50 flex flex-col items-center justify-start gap-3 p-1 shadow-[0px_0px_30px_10px_rgba(0,_0,_0,_0.25)]",
           props.className
         )}
       >

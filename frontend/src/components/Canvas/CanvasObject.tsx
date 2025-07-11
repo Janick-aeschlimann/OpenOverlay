@@ -1,13 +1,11 @@
 import { useCanvasStore } from "@/store/canvas";
 import type { CanvasObject, CanvasTransform } from "@/types/types";
 import { useRef } from "react";
-import * as Y from "yjs";
 
 export interface ICanvasObjectProps {
   object: CanvasObject;
   canvasTransform: CanvasTransform;
   setCanvasObject: (object: CanvasObject) => void;
-  undoManager?: Y.UndoManager;
   overlayId: number;
 }
 
@@ -17,9 +15,8 @@ const CanvasObjectComponent: React.FC<ICanvasObjectProps> = (props) => {
   const minWidth = 100;
   const minHeight = 100;
 
-  const { selectedCanvasObjectId, setSelectedCanvasObjectId } = useCanvasStore(
-    props.overlayId
-  );
+  const { connection, selectedCanvasObjectId, setSelectedCanvasObjectId } =
+    useCanvasStore(props.overlayId);
 
   const handleMouseMove = (event: MouseEvent) => {
     if (lastPos.current) {
@@ -51,7 +48,7 @@ const CanvasObjectComponent: React.FC<ICanvasObjectProps> = (props) => {
   const handleMouseUp = () => {
     document.removeEventListener("mousemove", handleMouseMove);
     document.removeEventListener("mouseup", handleMouseMove);
-    props.undoManager?.stopCapturing();
+    connection.canvasSync?.undoManager.stopCapturing();
   };
 
   const handleResizeTop = (event: MouseEvent) => {
@@ -197,7 +194,7 @@ const CanvasObjectComponent: React.FC<ICanvasObjectProps> = (props) => {
   const handleResizeMouseUp = (resizeHandler: (event: MouseEvent) => void) => {
     document.removeEventListener("mousemove", resizeHandler);
     document.removeEventListener("mouseup", handleMouseMove);
-    props.undoManager?.stopCapturing();
+    connection.canvasSync?.undoManager.stopCapturing();
   };
 
   const handleResizeMouseDown = (event: React.MouseEvent) => {
@@ -245,7 +242,7 @@ const CanvasObjectComponent: React.FC<ICanvasObjectProps> = (props) => {
   return (
     <>
       <div
-        className="absolute"
+        className="absolute z-10 rounded-md overflow-hidden"
         style={{
           left:
             props.object.x * props.canvasTransform.scale +
@@ -258,15 +255,15 @@ const CanvasObjectComponent: React.FC<ICanvasObjectProps> = (props) => {
         }}
       >
         <div
-          className="absolute h-full z-10 w-full border-2 border-transparent rounded-xl pointer-events-none"
+          className="absolute h-full z-10 w-full border-3 border-transparent rounded-md pointer-events-none "
           style={{
             borderColor:
-              selectedCanvasObjectId == props.object.id ? "white" : "",
+              selectedCanvasObjectId == props.object.id ? "#0080FF" : "",
           }}
         ></div>
 
         <div
-          className="absolute bg-neutral-600 w-full h-full hover:cursor-move rounded-xl"
+          className="absolute bg-neutral-600 w-full h-full hover:cursor-move"
           onMouseDown={handleMouseDown}
           onMouseUp={handleMouseUp}
         ></div>

@@ -1,3 +1,5 @@
+import type { CanvasSync } from "@/lib/yjsSync";
+
 export interface AuthUser {
   userId: string;
   username: string;
@@ -13,6 +15,12 @@ export interface Workspace {
   logo: string | null;
   ownerId: string;
   access: string;
+}
+
+export interface Canvas {
+  width: number;
+  height: number;
+  color: string;
 }
 
 export interface CanvasObject {
@@ -39,4 +47,10 @@ export interface CanvasTransform {
   isDragging: boolean;
   mouseX: number;
   mouseY: number;
+}
+
+export interface Connection {
+  connected: boolean;
+  error: string | null;
+  canvasSync: CanvasSync | null;
 }

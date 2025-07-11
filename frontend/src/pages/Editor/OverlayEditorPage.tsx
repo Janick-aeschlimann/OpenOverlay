@@ -1,13 +1,18 @@
 import Canvas from "@/components/Canvas/Canvas";
 import Toolbar from "@/components/Canvas/Toolbar";
 import { Button } from "@/components/shadcn/ui/button";
-import { ArrowLeft, Plus } from "lucide-react";
+import { Input } from "@/components/shadcn/ui/input";
+import { useCanvasStore } from "@/store/canvas";
+import { ArrowLeft } from "lucide-react";
+import type { ChangeEvent } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 const OverlayEditor: React.FC = () => {
   const navigate = useNavigate();
 
   const overlayId = parseInt(useParams().id!);
+
+  const { canvas, updateCanvas } = useCanvasStore(overlayId);
 
   return (
     <>
@@ -23,9 +28,32 @@ const OverlayEditor: React.FC = () => {
             <ArrowLeft />
             Back
           </Button>
-          <Button className="cursor-pointer" size={"icon"} onClick={() => {}}>
-            <Plus />
-          </Button>
+          <div className="flex flex-row gap-3">
+            <Input
+              type="number"
+              placeholder="Width"
+              className="w-30"
+              value={canvas.width}
+              onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                updateCanvas({
+                  ...canvas,
+                  width: Math.max(parseInt(e.target.value) || 0, 0),
+                })
+              }
+            ></Input>
+            <Input
+              type="number"
+              placeholder="Height"
+              className="w-30"
+              value={canvas.height}
+              onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                updateCanvas({
+                  ...canvas,
+                  height: Math.max(parseInt(e.target.value) || 0, 0),
+                })
+              }
+            ></Input>
+          </div>
         </div>
         <div className="absolute h-full w-24 left-0 top-0 flex justify-center items-center">
           <Toolbar overlayId={overlayId} />

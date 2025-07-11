@@ -1,11 +1,17 @@
-import type { CanvasSync } from "@/lib/yjsSync";
-import type { CanvasDraft, CanvasObject, CanvasTransform } from "@/types/types";
+import { CanvasSync } from "@/lib/yjsSync";
+import type {
+  Canvas,
+  CanvasDraft,
+  CanvasObject,
+  CanvasTransform,
+  Connection,
+} from "@/types/types";
 import { Circle, Eraser, MousePointer2, Slash, Square } from "lucide-react";
 import { useMemo } from "react";
 import { create, useStore } from "zustand";
 import { persist } from "zustand/middleware";
 
-const canavs = new Map<number, ReturnType<typeof createCanvasStore>>();
+const canvas = new Map<number, ReturnType<typeof createCanvasStore>>();
 
 const userColors = [
   "#FF4C4C", // Vivid Red
@@ -51,20 +57,22 @@ export const tools: Tool[] = [
 ];
 
 export interface CanvasStore {
+  connection: Connection;
+  canvas: Canvas;
   canvasObjects: CanvasObject[];
   selectedCanvasObjectId: string | null;
   canvasTransform: CanvasTransform;
   presence: Presence;
   canvasDraft: CanvasDraft | null;
+  connectYjs: (overlayId: number) => Promise<CanvasSync>;
+  setCanvas: (canvas: Canvas) => void;
+  updateCanvas: (canvas: Canvas) => void;
   setCanvasObjects: (objects: CanvasObject[]) => void;
-  updateCanvasObject: (canvasSync: CanvasSync, newObject: CanvasObject) => void;
-  addCanvasObject: (canvasSync: CanvasSync, newObject?: CanvasObject) => void;
-  deleteCanvasObject: (canvasSync: CanvasSync, canvasObjectId: string) => void;
+  updateCanvasObject: (newObject: CanvasObject) => void;
+  addCanvasObject: (newObject?: CanvasObject) => void;
+  deleteCanvasObject: (canvasObjectId: string) => void;
   setSelectedCanvasObjectId: (canvasObjectId: string) => void;
-  setCanvasTransform: (
-    canvasSync: CanvasSync | null,
-    transform: CanvasTransform
-  ) => void;
+  setCanvasTransform: (transform: CanvasTransform) => void;
   setTool: (index: number) => void;
   setCanvasDraft: (canvasDraft: CanvasDraft | null) => void;
 }
@@ -73,6 +81,12 @@ export const createCanvasStore = (overlayId: number) =>
   create<CanvasStore>()(
     persist(
       (set, get) => ({
+        connection: { connected: false, error: null, canvasSync: null },
+        canvas: {
+          width: 1920,
+          height: 1080,
+          color: "#121212",
+        },
         canvasObjects: [],
         selectedCanvasObjectId: null,
         canvasTransform: {
@@ -92,51 +106,101 @@ export const createCanvasStore = (overlayId: number) =>
           color: getRandomColor(),
         },
         canvasDraft: null,
-        setCanvasObjects: (objects) => set({ canvasObjects: objects }),
-        updateCanvasObject: (canvasSync, newObject) => {
-          const id = newObject.id;
-          set((state) => ({
-            canvasObjects: state.canvasObjects.map((object) =>
-              object.id === id ? newObject : object
-            ),
-          }));
-          canvasSync.syncUpdateToYjs(newObject);
-        },
-        addCanvasObject: (canvasSync, newObject) => {
-          let object: CanvasObject;
-          const id = crypto.randomUUID();
+        connectYjs: async (overlayId) => {
+          const canvasSync = await CanvasSync.create(overlayId);
+          canvasSync.syncToLocal();
 
-          if (newObject) {
-            object = { ...newObject, id: id };
-          } else {
-            object = {
-              id: id,
-              x: 0,
-              y: 0,
-              width: 100,
-              height: 100,
-              rotation: 0,
-            };
-          }
-          set((state) => ({
-            canvasObjects: [...state.canvasObjects, object],
-          }));
-          canvasSync.syncNewToYjs(object);
+          set({
+            connection: {
+              connected: true,
+              error: null,
+              canvasSync: canvasSync,
+            },
+          });
+
+          const provider = canvasSync.provider;
+
+          provider.ws?.addEventListener("close", (event: any) => {
+            const connection = get().connection;
+            set({
+              connection: {
+                ...connection,
+                connected: false,
+                error: event.code + " " + event.reason,
+              },
+            });
+            if (event.code == 403) {
+              provider.shouldConnect = false;
+            }
+          });
+
+          return canvasSync;
         },
-        deleteCanvasObject: (canvasSync, canvasObjectId) => {
-          set((state) => ({
-            canvasObjects: state.canvasObjects.filter(
-              (object) => object.id !== canvasObjectId
-            ),
-          }));
-          canvasSync.syncDeleteToYjs(canvasObjectId);
+        setCanvas: (canvas) => set({ canvas: canvas }),
+        updateCanvas: (canvas) => {
+          set({ canvas: canvas });
+          const connection = get().connection;
+          if (connection.connected && connection.canvasSync) {
+            connection.canvasSync.syncCanvasToYjs(canvas);
+          }
+        },
+        setCanvasObjects: (objects) => set({ canvasObjects: objects }),
+        updateCanvasObject: (newObject) => {
+          const id = newObject.id;
+          const connection = get().connection;
+          if (connection.connected && connection.canvasSync) {
+            set((state) => ({
+              canvasObjects: state.canvasObjects.map((object) =>
+                object.id === id ? newObject : object
+              ),
+            }));
+            connection.canvasSync.syncUpdateToYjs(newObject);
+          }
+        },
+        addCanvasObject: (newObject) => {
+          const connection = get().connection;
+          if (connection.connected && connection.canvasSync) {
+            let object: CanvasObject;
+            const id = crypto.randomUUID();
+
+            if (newObject) {
+              object = { ...newObject, id: id };
+            } else {
+              object = {
+                id: id,
+                x: 0,
+                y: 0,
+                width: 100,
+                height: 100,
+                rotation: 0,
+              };
+            }
+            set((state) => ({
+              canvasObjects: [...state.canvasObjects, object],
+            }));
+            connection.canvasSync.syncNewToYjs(object);
+          }
+        },
+        deleteCanvasObject: (canvasObjectId) => {
+          const connection = get().connection;
+          if (connection.connected && connection.canvasSync) {
+            set((state) => ({
+              canvasObjects: state.canvasObjects.filter(
+                (object) => object.id !== canvasObjectId
+              ),
+            }));
+            connection.canvasSync.syncDeleteToYjs(canvasObjectId);
+          }
         },
         setSelectedCanvasObjectId: (canvasObjectId) =>
           set({ selectedCanvasObjectId: canvasObjectId }),
-        setCanvasTransform: (canvasSync, transform) => {
+        setCanvasTransform: (transform) => {
           const { mouseX, mouseY } = get().canvasTransform;
           if (mouseX !== transform.mouseX || mouseY !== transform.mouseY) {
-            canvasSync?.syncCursorToYjs(transform);
+            const connection = get().connection;
+            if (connection.connected && connection.canvasSync) {
+              connection.canvasSync.syncCursorToYjs(transform);
+            }
           }
           set({ canvasTransform: transform });
         },
@@ -165,11 +229,16 @@ export const createCanvasStore = (overlayId: number) =>
 export const useCanvasStore = (overlayId: number) => {
   const store = useMemo(() => getCanvasStore(overlayId), [overlayId]);
   return {
+    connection: useStore(store, (s) => s.connection),
+    canvas: useStore(store, (s) => s.canvas),
     canvasObjects: useStore(store, (s) => s.canvasObjects),
     selectedCanvasObjectId: useStore(store, (s) => s.selectedCanvasObjectId),
     canvasTransform: useStore(store, (s) => s.canvasTransform),
     presence: useStore(store, (s) => s.presence),
     canvasDraft: useStore(store, (s) => s.canvasDraft),
+    connectYjs: useStore(store, (s) => s.connectYjs),
+    setCanvas: useStore(store, (s) => s.setCanvas),
+    updateCanvas: useStore(store, (s) => s.updateCanvas),
     setCanvasObjects: useStore(store, (s) => s.setCanvasObjects),
     updateCanvasObject: useStore(store, (s) => s.updateCanvasObject),
     addCanvasObject: useStore(store, (s) => s.addCanvasObject),
@@ -185,8 +254,8 @@ export const useCanvasStore = (overlayId: number) => {
 };
 
 export const getCanvasStore = (overlayId: number) => {
-  if (!canavs.has(overlayId)) {
-    canavs.set(overlayId, createCanvasStore(overlayId));
+  if (!canvas.has(overlayId)) {
+    canvas.set(overlayId, createCanvasStore(overlayId));
   }
-  return canavs.get(overlayId)!;
+  return canvas.get(overlayId)!;
 };

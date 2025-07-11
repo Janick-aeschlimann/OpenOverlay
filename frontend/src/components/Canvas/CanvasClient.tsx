@@ -11,7 +11,7 @@ const CanvasClient: React.FC<ICanvasClientProps> = (props) => {
   return (
     <>
       <div
-        className="absolute z-50"
+        className="absolute z-30"
         style={{
           left:
             props.cursor.x * props.canvasTransform.scale +

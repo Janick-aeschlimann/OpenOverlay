@@ -133,9 +133,9 @@ function App() {
             <Route
               path="workspace/:workspaceId/overlay/:id"
               element={
-                <ProtectedRoute>
-                  <OverlayEditor />
-                </ProtectedRoute>
+                // <ProtectedRoute>
+                <OverlayEditor />
+                // </ProtectedRoute>
               }
             />
           </Route>

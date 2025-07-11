@@ -1,5 +1,5 @@
 import { createCanvasStore, getCanvasStore } from "@/store/canvas";
-import type { CanvasObject, CanvasTransform } from "@/types/types";
+import type { Canvas, CanvasObject, CanvasTransform } from "@/types/types";
 import { WebsocketProvider } from "y-websocket";
 import Session from "supertokens-web-js/recipe/session";
 import * as Y from "yjs";
@@ -8,6 +8,7 @@ export class CanvasSync {
   public provider: WebsocketProvider;
   public ydoc: Y.Doc;
   public yarray: Y.Array<Y.Map<any>>;
+  public ycanvas: Y.Map<any>;
   public undoManager: Y.UndoManager;
   public canvasStore: ReturnType<typeof createCanvasStore>;
 
@@ -19,6 +20,7 @@ export class CanvasSync {
     this.provider = provider;
     this.ydoc = ydoc;
     this.yarray = ydoc.getArray<Y.Map<any>>("objects");
+    this.ycanvas = ydoc.getMap<Y.Map<any>>("canvas");
     this.undoManager = new Y.UndoManager(this.yarray, { captureTimeout: 1000 });
     this.canvasStore = canvasStore;
 
@@ -46,6 +48,11 @@ export class CanvasSync {
     this.yarray.observeDeep(() => {
       const state = this.canvasStore.getState();
       state.setCanvasObjects(this.yarray.toArray().map(this.mapCanvasObject));
+    });
+
+    this.ycanvas.observeDeep(() => {
+      const state = this.canvasStore.getState();
+      state.setCanvas(this.ycanvas.toJSON() as Canvas);
     });
   };
 
@@ -83,6 +90,12 @@ export class CanvasSync {
       x: canvasTransform.mouseX,
       y: canvasTransform.mouseY,
     });
+  };
+
+  syncCanvasToYjs = (canvas: Canvas) => {
+    this.ycanvas.set("width", canvas.width);
+    this.ycanvas.set("height", canvas.height);
+    this.ycanvas.set("color", canvas.color);
   };
 
   private mapCanvasObject = (y: Y.Map<any>): CanvasObject => {
