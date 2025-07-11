@@ -1,5 +1,9 @@
-import { createCanvasStore, getCanvasStore } from "@/store/canvas";
-import type { Canvas, CanvasObject, CanvasTransform } from "@/types/types";
+import {
+  createCanvasStore,
+  getCanvasStore,
+  type Presence,
+} from "@/store/canvas";
+import type { Canvas, CanvasObject } from "@/types/types";
 import { WebsocketProvider } from "y-websocket";
 import Session from "supertokens-web-js/recipe/session";
 import * as Y from "yjs";
@@ -54,6 +58,33 @@ export class CanvasSync {
       const state = this.canvasStore.getState();
       state.setCanvas(this.ycanvas.toJSON() as Canvas);
     });
+
+    const awareness = this.provider.awareness;
+
+    awareness.on("change", () => {
+      const state = this.canvasStore.getState();
+      const states = Array.from(awareness.getStates().entries());
+
+      state.setClients(
+        states
+          .filter(([clientId]) => clientId != awareness.clientID)
+          .map((c) => {
+            const user = c[1].user;
+            const cursor = c[1].cursor;
+            return {
+              clientID: c[0],
+              userId: user?.userId,
+              username: user?.username,
+              color: user?.color,
+              cursor: {
+                toolIndex: cursor?.toolIndex || 0,
+                x: cursor?.x,
+                y: cursor?.y,
+              },
+            };
+          })
+      );
+    });
   };
 
   syncUpdateToYjs = (object: CanvasObject) => {
@@ -85,10 +116,11 @@ export class CanvasSync {
     this.yarray.delete(index, 1);
   };
 
-  syncCursorToYjs = (canvasTransform: CanvasTransform) => {
+  syncCursorToYjs = (presence: Presence) => {
     this.provider.awareness.setLocalStateField("cursor", {
-      x: canvasTransform.mouseX,
-      y: canvasTransform.mouseY,
+      toolIndex: presence.cursor.toolIndex,
+      x: presence.cursor.x,
+      y: presence.cursor.y,
     });
   };
 

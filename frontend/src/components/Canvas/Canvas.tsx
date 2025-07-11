@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { useAuthStore } from "@/store/auth";
 import { useParams } from "react-router-dom";
 import CanvasObjectComponent from "@/components/Canvas/CanvasObject";
@@ -22,6 +22,7 @@ const Canvas: React.FC<ICanvasProps> = (props) => {
     canvasTransform,
     presence,
     canvasDraft,
+    clients,
     connectYjs,
     updateCanvasObject,
     addCanvasObject,
@@ -29,30 +30,18 @@ const Canvas: React.FC<ICanvasProps> = (props) => {
     setCanvasTransform,
     setTool,
     setCanvasDraft,
+    setPresence,
   } = useCanvasStore(overlayId);
 
   const canvasStore = getCanvasStore(overlayId);
 
   const lastPos = useRef<{ x: number; y: number } | null>(null);
 
-  const [clients, setClients] = useState<any[]>([]);
   const user = useAuthStore().user;
 
   useEffect(() => {
     const connect = async () => {
       const canvasSync = await connectYjs(overlayId);
-
-      const provider = canvasSync.provider;
-      const awareness = provider.awareness;
-
-      awareness.on("change", () => {
-        const states = Array.from(awareness.getStates().entries());
-        setClients(
-          states
-            .filter(([clientId]) => clientId != awareness.clientID)
-            .map((c) => c[1])
-        );
-      });
 
       document.addEventListener("keydown", (event: KeyboardEvent) => {
         if (event.code == "Delete") {
@@ -192,14 +181,17 @@ const Canvas: React.FC<ICanvasProps> = (props) => {
   };
 
   const updateCursorMove = (event: React.PointerEvent) => {
-    const transform = canvasStore.getState().canvasTransform;
+    const presence = canvasStore.getState().presence;
 
     const { worldX, worldY } = mouseToWorld(event.clientX, event.clientY);
 
-    setCanvasTransform({
-      ...transform,
-      mouseX: worldX,
-      mouseY: worldY,
+    setPresence({
+      ...presence,
+      cursor: {
+        ...presence.cursor,
+        x: worldX,
+        y: worldY,
+      },
     });
   };
 
@@ -209,8 +201,8 @@ const Canvas: React.FC<ICanvasProps> = (props) => {
       const state = canvasStore.getState();
 
       const newCanvasDraft: CanvasDraft = {
-        x: state.canvasTransform.mouseX,
-        y: state.canvasTransform.mouseY,
+        x: state.presence.cursor.x,
+        y: state.presence.cursor.y,
         width: 0,
         height: 0,
         type: "rectangle",
@@ -291,12 +283,11 @@ const Canvas: React.FC<ICanvasProps> = (props) => {
           onMouseDown={creatorMouseDown}
         ></div>
         {clients.map((client, index) => {
-          if (client.user && client.cursor) {
+          if (client.userId && client.username && client.color) {
             return (
               <CanvasClient
                 key={index}
-                cursor={client.cursor}
-                user={client.user}
+                client={client}
                 canvasTransform={canvasTransform}
               ></CanvasClient>
             );
@@ -328,8 +319,8 @@ const Canvas: React.FC<ICanvasProps> = (props) => {
         />
         <div className="absolute left-2 bottom-1 flex flex-row gap-5 text-neutral-300 font-semibold z-50">
           <span>
-            Mouse: {Math.round(canvasTransform.mouseX)} /{" "}
-            {Math.round(canvasTransform.mouseY)}
+            Mouse: {Math.round(presence.cursor.x)} /{" "}
+            {Math.round(presence.cursor.y)}
           </span>
           <span>
             Offset: {Math.round(canvasTransform.offsetX)} /{" "}

@@ -4,6 +4,7 @@ import type {
   CanvasDraft,
   CanvasObject,
   CanvasTransform,
+  Client,
   Connection,
 } from "@/types/types";
 import { Circle, Eraser, MousePointer2, Slash, Square } from "lucide-react";
@@ -34,12 +35,12 @@ const getRandomColor = () => {
   return userColors[index];
 };
 
-interface Tool {
+export interface Tool {
   name: string;
   icon: React.ComponentType<any>; // or more specifically, `LucideIcon` if you have that type
 }
 
-interface Presence {
+export interface Presence {
   cursor: {
     toolIndex: number;
     x: number;
@@ -64,6 +65,7 @@ export interface CanvasStore {
   canvasTransform: CanvasTransform;
   presence: Presence;
   canvasDraft: CanvasDraft | null;
+  clients: Client[];
   connectYjs: (overlayId: number) => Promise<CanvasSync>;
   setCanvas: (canvas: Canvas) => void;
   updateCanvas: (canvas: Canvas) => void;
@@ -75,6 +77,9 @@ export interface CanvasStore {
   setCanvasTransform: (transform: CanvasTransform) => void;
   setTool: (index: number) => void;
   setCanvasDraft: (canvasDraft: CanvasDraft | null) => void;
+  setPresence: (presence: Presence) => void;
+  setClients: (clients: Client[]) => void;
+  updateClient: (client: Client) => void;
 }
 
 export const createCanvasStore = (overlayId: number) =>
@@ -106,6 +111,7 @@ export const createCanvasStore = (overlayId: number) =>
           color: getRandomColor(),
         },
         canvasDraft: null,
+        clients: [],
         connectYjs: async (overlayId) => {
           const canvasSync = await CanvasSync.create(overlayId);
           canvasSync.syncToLocal();
@@ -195,13 +201,6 @@ export const createCanvasStore = (overlayId: number) =>
         setSelectedCanvasObjectId: (canvasObjectId) =>
           set({ selectedCanvasObjectId: canvasObjectId }),
         setCanvasTransform: (transform) => {
-          const { mouseX, mouseY } = get().canvasTransform;
-          if (mouseX !== transform.mouseX || mouseY !== transform.mouseY) {
-            const connection = get().connection;
-            if (connection.connected && connection.canvasSync) {
-              connection.canvasSync.syncCursorToYjs(transform);
-            }
-          }
           set({ canvasTransform: transform });
         },
         setTool: (index) => {
@@ -216,11 +215,35 @@ export const createCanvasStore = (overlayId: number) =>
         setCanvasDraft: (canvasDraft) => {
           set({ canvasDraft: canvasDraft });
         },
+        setPresence: (presence) => {
+          set({ presence: presence });
+          const connection = get().connection;
+          if (connection.connected && connection.canvasSync) {
+            connection.canvasSync.syncCursorToYjs(presence);
+          }
+        },
+        setClients: (clients) => set({ clients: clients }),
+        updateClient: (client) => {
+          const clients = get().clients;
+          const oldClient = get().clients.find(
+            (client) => client.clientID == client.clientID
+          );
+          if (oldClient) {
+            set({
+              clients: clients.map((c) =>
+                c.clientID == client.clientID ? client : c
+              ),
+            });
+          } else {
+            set({ clients: [...clients, client] });
+          }
+        },
       }),
       {
         name: `overlay-${overlayId}`,
         partialize: (state) => ({
           canvasTransform: state.canvasTransform,
+          presence: state.presence,
         }),
       }
     )
@@ -236,6 +259,7 @@ export const useCanvasStore = (overlayId: number) => {
     canvasTransform: useStore(store, (s) => s.canvasTransform),
     presence: useStore(store, (s) => s.presence),
     canvasDraft: useStore(store, (s) => s.canvasDraft),
+    clients: useStore(store, (s) => s.clients),
     connectYjs: useStore(store, (s) => s.connectYjs),
     setCanvas: useStore(store, (s) => s.setCanvas),
     updateCanvas: useStore(store, (s) => s.updateCanvas),
@@ -250,6 +274,9 @@ export const useCanvasStore = (overlayId: number) => {
     setCanvasTransform: useStore(store, (s) => s.setCanvasTransform),
     setTool: useStore(store, (s) => s.setTool),
     setCanvasDraft: useStore(store, (s) => s.setCanvasDraft),
+    setPresence: useStore(store, (s) => s.setPresence),
+    setClients: useStore(store, (s) => s.setClients),
+    updateClient: useStore(store, (s) => s.updateClient),
   };
 };
 

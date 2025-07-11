@@ -45,12 +45,22 @@ export interface CanvasTransform {
   offsetY: number;
   scale: number;
   isDragging: boolean;
-  mouseX: number;
-  mouseY: number;
 }
 
 export interface Connection {
   connected: boolean;
   error: string | null;
   canvasSync: CanvasSync | null;
+}
+
+export interface Client {
+  clientID: number;
+  userId: string | null;
+  username: string | null;
+  color: string | null;
+  cursor: {
+    toolIndex: number;
+    x: number;
+    y: number;
+  };
 }

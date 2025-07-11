@@ -9,7 +9,7 @@ const CanvasDraftComponent: React.FC<ICanvasDraftComponentProps> = (props) => {
   return (
     <>
       <div
-        className="absolute bg-white z-20"
+        className="absolute z-20 bg-neutral-600 w-full h-full rounded-md"
         style={{
           left:
             (props.canvasDraft?.x || 0) * props.canvasTransform.scale +
