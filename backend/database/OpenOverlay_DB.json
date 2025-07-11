@@ -1,0 +1,460 @@
+{
+  "tables": [
+    {
+      "id": "1TJfofWo-Sl-ec6IsFg4k",
+      "name": "user",
+      "x": -131.68803662109383,
+      "y": -41.318438545226996,
+      "locked": false,
+      "fields": [
+        {
+          "name": "userId",
+          "type": "VARCHAR",
+          "default": "",
+          "check": "",
+          "primary": true,
+          "unique": true,
+          "notNull": true,
+          "increment": false,
+          "comment": "",
+          "id": "gm68as_NjqgT7Vlnq7tZw",
+          "size": 255
+        },
+        {
+          "id": "je5XBeSUWMyWod6FyORqw",
+          "name": "username",
+          "type": "VARCHAR",
+          "default": "",
+          "check": "",
+          "primary": false,
+          "unique": true,
+          "notNull": true,
+          "increment": false,
+          "comment": "",
+          "size": 255
+        },
+        {
+          "id": "JetTeb5BhhitHmftvQ7Oo",
+          "name": "created_at",
+          "type": "DATETIME",
+          "default": "",
+          "check": "",
+          "primary": false,
+          "unique": false,
+          "notNull": true,
+          "increment": false,
+          "comment": "",
+          "size": "",
+          "values": []
+        },
+        {
+          "id": "59oZmXOd2UNDf0FMQ6N_H",
+          "name": "profile_picture",
+          "type": "VARCHAR",
+          "default": "",
+          "check": "",
+          "primary": false,
+          "unique": false,
+          "notNull": false,
+          "increment": false,
+          "comment": "",
+          "size": 255
+        }
+      ],
+      "comment": "",
+      "indices": [],
+      "color": "#175e7a"
+    },
+    {
+      "id": "zbZobdUfPaknthkYyyrBg",
+      "name": "workspace",
+      "x": -610.7267895507813,
+      "y": -138.79696007131557,
+      "locked": false,
+      "fields": [
+        {
+          "name": "workspaceId",
+          "type": "INTEGER",
+          "default": "",
+          "check": "",
+          "primary": true,
+          "unique": true,
+          "notNull": true,
+          "increment": true,
+          "comment": "",
+          "id": "7eD_K4PdzEc5KNT5uKOJU"
+        },
+        {
+          "id": "UYEsbVIljm-glp_yaSkvR",
+          "name": "name",
+          "type": "VARCHAR",
+          "default": "",
+          "check": "",
+          "primary": false,
+          "unique": false,
+          "notNull": true,
+          "increment": false,
+          "comment": "",
+          "size": 255
+        },
+        {
+          "id": "PL5mcyEOAAJUjmQID34uS",
+          "name": "slug",
+          "type": "VARCHAR",
+          "default": "",
+          "check": "",
+          "primary": false,
+          "unique": true,
+          "notNull": true,
+          "increment": false,
+          "comment": "",
+          "size": 255
+        },
+        {
+          "id": "ih1hWrH78gQMihJ7W2O2A",
+          "name": "logo",
+          "type": "VARCHAR",
+          "default": "",
+          "check": "",
+          "primary": false,
+          "unique": false,
+          "notNull": false,
+          "increment": false,
+          "comment": "",
+          "size": 255
+        },
+        {
+          "id": "uRyD8MJqEIkK8oEvTRWoA",
+          "name": "ownerId",
+          "type": "VARCHAR",
+          "default": "",
+          "check": "",
+          "primary": false,
+          "unique": false,
+          "notNull": true,
+          "increment": false,
+          "comment": "",
+          "size": 255,
+          "values": []
+        }
+      ],
+      "comment": "",
+      "indices": [],
+      "color": "#175e7a"
+    },
+    {
+      "id": "sytkNXtrHQ0CK4Tn4CNho",
+      "name": "workspace_role",
+      "x": -1003.4514915466309,
+      "y": -28.79955052185079,
+      "locked": false,
+      "fields": [
+        {
+          "name": "roleId",
+          "type": "INTEGER",
+          "default": "",
+          "check": "",
+          "primary": true,
+          "unique": true,
+          "notNull": true,
+          "increment": true,
+          "comment": "",
+          "id": "pHcxl2A-oJ_xajriD82hP"
+        },
+        {
+          "id": "mWkUEWoscnrvkJ6zdtumX",
+          "name": "workspaceId",
+          "type": "INTEGER",
+          "default": "",
+          "check": "",
+          "primary": false,
+          "unique": false,
+          "notNull": true,
+          "increment": false,
+          "comment": "",
+          "size": "",
+          "values": []
+        },
+        {
+          "id": "PDq_uBLLY4Mo_0_yIrup1",
+          "name": "name",
+          "type": "VARCHAR",
+          "default": "",
+          "check": "",
+          "primary": false,
+          "unique": false,
+          "notNull": true,
+          "increment": false,
+          "comment": "",
+          "size": 255
+        }
+      ],
+      "comment": "",
+      "indices": [],
+      "color": "#175e7a"
+    },
+    {
+      "id": "U2FRa0d-gEInY6fd-q1Su",
+      "name": "role_permission",
+      "x": -1312.0154338533443,
+      "y": -97.56189409821224,
+      "locked": true,
+      "fields": [
+        {
+          "name": "roleId",
+          "type": "INTEGER",
+          "default": "",
+          "check": "",
+          "primary": true,
+          "unique": true,
+          "notNull": true,
+          "increment": true,
+          "comment": "",
+          "id": "z31CNmT1tyCLEuvROBdwT"
+        },
+        {
+          "id": "GhCGYAJ23BqjLjgpJ0ZRD",
+          "name": "permission_key",
+          "type": "VARCHAR",
+          "default": "",
+          "check": "",
+          "primary": true,
+          "unique": false,
+          "notNull": true,
+          "increment": false,
+          "comment": "",
+          "size": 255
+        }
+      ],
+      "comment": "",
+      "indices": [],
+      "color": "#175e7a"
+    },
+    {
+      "id": "J3wPlcGTqHZd-wD1-SM2y",
+      "name": "workspace_access",
+      "x": -611.7292921258252,
+      "y": 181.42599586112345,
+      "locked": false,
+      "fields": [
+        {
+          "name": "accessId",
+          "type": "INTEGER",
+          "default": "",
+          "check": "",
+          "primary": true,
+          "unique": true,
+          "notNull": true,
+          "increment": true,
+          "comment": "",
+          "id": "CwB5qzK39LQE9Cyoj4Mts"
+        },
+        {
+          "id": "7GF82RVQVLeUSg1SJhrnY",
+          "name": "roleId",
+          "type": "INTEGER",
+          "default": "",
+          "check": "",
+          "primary": false,
+          "unique": false,
+          "notNull": true,
+          "increment": false,
+          "comment": "",
+          "size": "",
+          "values": []
+        },
+        {
+          "id": "qWHzBru8XFH0951yoL_De",
+          "name": "userId",
+          "type": "VARCHAR",
+          "default": "",
+          "check": "",
+          "primary": false,
+          "unique": false,
+          "notNull": true,
+          "increment": false,
+          "comment": "",
+          "size": 255,
+          "values": []
+        }
+      ],
+      "comment": "",
+      "indices": [],
+      "color": "#175e7a"
+    },
+    {
+      "id": "W92OACpgEx1l4fMjg1IS6",
+      "name": "overlay",
+      "x": -540.8824160271922,
+      "y": -482.1247389258643,
+      "locked": false,
+      "fields": [
+        {
+          "name": "overlayId",
+          "type": "INTEGER",
+          "default": "",
+          "check": "",
+          "primary": true,
+          "unique": true,
+          "notNull": true,
+          "increment": true,
+          "comment": "",
+          "id": "xyb6nzFEdF3SDyPMG_oaI"
+        },
+        {
+          "id": "Fpm-_6OzTc5t2F4FP5liU",
+          "name": "name",
+          "type": "VARCHAR",
+          "default": "",
+          "check": "",
+          "primary": false,
+          "unique": false,
+          "notNull": true,
+          "increment": false,
+          "comment": "",
+          "size": 255
+        },
+        {
+          "id": "AhISkxWbRez75qQwiuGHr",
+          "name": "description",
+          "type": "TEXT",
+          "default": "",
+          "check": "",
+          "primary": false,
+          "unique": false,
+          "notNull": false,
+          "increment": false,
+          "comment": "",
+          "size": 65535
+        },
+        {
+          "id": "6PI0R0VS6uotRqXB5dCE9",
+          "name": "workspaceId",
+          "type": "INTEGER",
+          "default": "",
+          "check": "",
+          "primary": false,
+          "unique": false,
+          "notNull": true,
+          "increment": false,
+          "comment": "",
+          "size": "",
+          "values": []
+        },
+        {
+          "id": "DR7t2lf_BMIzEV6hLcO0H",
+          "name": "created_at",
+          "type": "TIMESTAMP",
+          "default": "",
+          "check": "",
+          "primary": false,
+          "unique": false,
+          "notNull": true,
+          "increment": false,
+          "comment": "",
+          "size": "",
+          "values": []
+        },
+        {
+          "id": "ITFx28C0Q3BRTZ9YWD06R",
+          "name": "userId",
+          "type": "VARCHAR",
+          "default": "",
+          "check": "",
+          "primary": false,
+          "unique": false,
+          "notNull": true,
+          "increment": false,
+          "comment": "",
+          "size": 255
+        }
+      ],
+      "comment": "",
+      "indices": [],
+      "color": "#175e7a"
+    }
+  ],
+  "relationships": [
+    {
+      "startTableId": "sytkNXtrHQ0CK4Tn4CNho",
+      "startFieldId": "mWkUEWoscnrvkJ6zdtumX",
+      "endTableId": "zbZobdUfPaknthkYyyrBg",
+      "endFieldId": "7eD_K4PdzEc5KNT5uKOJU",
+      "cardinality": "one_to_many",
+      "updateConstraint": "No action",
+      "deleteConstraint": "No action",
+      "name": "fk_workspace_roles_workspaceId_workspace",
+      "id": 0
+    },
+    {
+      "startTableId": "zbZobdUfPaknthkYyyrBg",
+      "startFieldId": "uRyD8MJqEIkK8oEvTRWoA",
+      "endTableId": "1TJfofWo-Sl-ec6IsFg4k",
+      "endFieldId": "gm68as_NjqgT7Vlnq7tZw",
+      "cardinality": "many_to_one",
+      "updateConstraint": "No action",
+      "deleteConstraint": "No action",
+      "name": "fk_workspace_ownerId_user",
+      "id": 1
+    },
+    {
+      "startTableId": "U2FRa0d-gEInY6fd-q1Su",
+      "startFieldId": "z31CNmT1tyCLEuvROBdwT",
+      "endTableId": "sytkNXtrHQ0CK4Tn4CNho",
+      "endFieldId": "pHcxl2A-oJ_xajriD82hP",
+      "cardinality": "many_to_one",
+      "updateConstraint": "No action",
+      "deleteConstraint": "No action",
+      "name": "fk_role_permission_roleId_workspace_role",
+      "id": 2
+    },
+    {
+      "startTableId": "J3wPlcGTqHZd-wD1-SM2y",
+      "startFieldId": "qWHzBru8XFH0951yoL_De",
+      "endTableId": "1TJfofWo-Sl-ec6IsFg4k",
+      "endFieldId": "gm68as_NjqgT7Vlnq7tZw",
+      "cardinality": "one_to_one",
+      "updateConstraint": "No action",
+      "deleteConstraint": "No action",
+      "name": "fk_workspace_access_userId_user",
+      "id": 3
+    },
+    {
+      "startTableId": "J3wPlcGTqHZd-wD1-SM2y",
+      "startFieldId": "7GF82RVQVLeUSg1SJhrnY",
+      "endTableId": "sytkNXtrHQ0CK4Tn4CNho",
+      "endFieldId": "pHcxl2A-oJ_xajriD82hP",
+      "cardinality": "one_to_one",
+      "updateConstraint": "No action",
+      "deleteConstraint": "No action",
+      "name": "fk_workspace_access_roleId_workspace_role",
+      "id": 4
+    },
+    {
+      "startTableId": "W92OACpgEx1l4fMjg1IS6",
+      "startFieldId": "6PI0R0VS6uotRqXB5dCE9",
+      "endTableId": "zbZobdUfPaknthkYyyrBg",
+      "endFieldId": "7eD_K4PdzEc5KNT5uKOJU",
+      "cardinality": "many_to_one",
+      "updateConstraint": "No action",
+      "deleteConstraint": "No action",
+      "name": "fk_overlay_workspaceId_workspace",
+      "id": 5
+    },
+    {
+      "startTableId": "W92OACpgEx1l4fMjg1IS6",
+      "startFieldId": "ITFx28C0Q3BRTZ9YWD06R",
+      "endTableId": "1TJfofWo-Sl-ec6IsFg4k",
+      "endFieldId": "gm68as_NjqgT7Vlnq7tZw",
+      "cardinality": "many_to_one",
+      "updateConstraint": "No action",
+      "deleteConstraint": "No action",
+      "name": "fk_overlay_userId_user",
+      "id": 6
+    }
+  ],
+  "notes": [],
+  "subjectAreas": [],
+  "database": "mysql",
+  "title": "OpenOverlay"
+}
