@@ -1,3 +1,4 @@
+-- Active: 1748635777197@@184.174.36.51@3307@open_overlay
 USE open_overlay;
 
 CREATE TABLE user(
@@ -52,4 +53,19 @@ CREATE TABLE `overlay` (
 	PRIMARY KEY(`overlayId`),
 	Foreign Key (workspaceId) REFERENCES workspace(workspaceId),
 	Foreign Key (userId) REFERENCES user(userId)
+);
+
+CREATE TABLE `renderSource` (
+	`renderSourceId` INTEGER NOT NULL AUTO_INCREMENT UNIQUE,
+	`name` VARCHAR(255) NOT NULL,
+	`token` VARCHAR(255) NOT NULL,
+	`overlayId` INTEGER,
+	`workspaceId` INTEGER NOT NULL,
+	`updated_at` DATETIME NOT NULL,
+	`width` INTEGER NOT NULL,
+	`height` INTEGER NOT NULL,
+	`frameRate` INTEGER NOT NULL,
+	PRIMARY KEY(`renderSourceId`),
+	Foreign Key (overlayId) REFERENCES overlay(overlayId),
+	Foreign Key (workspaceId) REFERENCES workspace(workspaceId)
 );

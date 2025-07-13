@@ -11,7 +11,8 @@ import {
   createWorkspace,
 } from "../controllers/workspaceController.js";
 
-import overlayRoutes from "./overlayRoutes.js";
+import overlayRoutes from "./workspaceRoutes/overlayRoutes.js";
+import renderSourceRoutes from "./workspaceRoutes/renderSourceRoutes.js";
 
 router.get("/", verifySession(), getWorkspaces);
 router.get("/owned", verifySession(), getOwnedWorkspaces);
@@ -20,5 +21,6 @@ router.get("/slug/:slug", verifySession(), getWorkspaceWithSlug);
 router.post("/create", verifySession(), createWorkspace);
 
 router.use("/:workspaceId/overlay", overlayRoutes);
+router.use("/:workspaceId/rendersource", renderSourceRoutes);
 
 export default router;

@@ -7,7 +7,7 @@ import {
   createOverlay,
   getWorkspaceOverlay,
   getWorkspaceOverlays,
-} from "../controllers/overlayController.js";
+} from "../../controllers/overlayController.js";
 
 router.get("/", verifySession(), getWorkspaceOverlays);
 router.post("/create", verifySession(), createOverlay);
