@@ -78,6 +78,37 @@ export const createYWebsocketServer = async ({
         throw e;
       }
     },
+    async (req) => {
+      const room = req.getParameter(0);
+      const headerWsProtocol = req.getHeader("sec-websocket-protocol");
+      const [, , token] = /(^|,)token-(((?!,).)*)/.exec(headerWsProtocol) ?? [
+        null,
+        null,
+        req.getQuery("token"),
+      ];
+      if (token == null) {
+        throw new Error("Missing Token");
+      }
+      try {
+        const response = await fetch(
+          `http://backend:7001/api/rendersource/token/${token}`
+        );
+
+        if (response.ok) {
+          const renderSource = await response.json();
+          if (renderSource.overlayId == parseInt(room)) {
+            return { room: room, renderSourceId: renderSource.renderSourceId };
+          } else {
+            throw new Error("Forbidden");
+          }
+        } else {
+          throw new Error("Invalid Token");
+        }
+      } catch (e) {
+        console.error("Failed to pull renderSource");
+        throw e;
+      }
+    },
     { redisPrefix, initDocCallback }
   );
 

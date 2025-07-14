@@ -37,8 +37,8 @@ export class CanvasSync {
     const ydoc = new Y.Doc();
 
     const provider = new WebsocketProvider(
-      import.meta.env.VITE_WS_URL,
-      canvasId.toString() || "",
+      `${import.meta.env.VITE_WS_URL}`,
+      `overlay/${canvasId}/edit`,
       ydoc,
       { params: { yauth: accessToken } }
     );

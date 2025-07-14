@@ -20,6 +20,7 @@ import CreateRenderSource from "./pages/workspace/CreateRenderSourcePage";
 import { useWorkspaceStore } from "./store/workspace";
 import AuthWrapper from "./components/PageWrapper/AuthWrapper";
 import CreateOverlay from "./pages/workspace/CreateOverlayPage";
+import ReadonlyCanvas from "./components/Canvas/ReadonlyCanvas";
 
 function App() {
   const { fetchWorkspaces, setWorkspaceSlug, getLastWorkspace } =
@@ -118,13 +119,14 @@ function App() {
                 }
               />
               <Route
-                path="workspace/:slug/overlay/:id"
+                path="/workspace/:slug/overlay/:id"
                 element={
                   // <ProtectedRoute>
                   <OverlayEditor />
                   // </ProtectedRoute>
                 }
               />
+              <Route path="/canvas" element={<ReadonlyCanvas />} />
             </Route>
           </Routes>
         </ThemeProvider>

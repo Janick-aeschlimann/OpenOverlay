@@ -1,15 +1,19 @@
-import * as Y from 'yjs'
-import * as uws from 'uws'
-import * as promise from 'lib0/promise'
-import * as api from './api.js'
-import * as array from 'lib0/array'
-import * as encoding from 'lib0/encoding'
-import * as decoding from 'lib0/decoding'
-import * as protocol from './protocol.js'
-import * as logging from 'lib0/logging'
-import { createSubscriber } from './subscriber.js'
+import * as Y from "yjs";
+import * as uws from "uws";
+import * as promise from "lib0/promise";
+import * as api from "./api.js";
+import * as array from "lib0/array";
+import * as encoding from "lib0/encoding";
+import * as decoding from "lib0/decoding";
+import * as protocol from "./protocol.js";
+import * as env from "lib0/environment";
+import * as logging from "lib0/logging";
+import { createClient } from "redis";
+import { createSubscriber } from "./subscriber.js";
 
-const log = logging.createModuleLogger('@y/redis/ws')
+const log = logging.createModuleLogger("@y/redis/ws");
+
+export const redisUrl = env.ensureConf("redis");
 
 /**
  * how to sync
@@ -29,19 +33,19 @@ class YWebsocketServer {
    * @param {api.Api} client
    * @param {import('./subscriber.js').Subscriber} subscriber
    */
-  constructor (app, client, subscriber) {
-    this.app = app
-    this.subscriber = subscriber
-    this.client = client
+  constructor(app, client, subscriber) {
+    this.app = app;
+    this.subscriber = subscriber;
+    this.client = client;
   }
 
-  async destroy () {
-    this.subscriber.destroy()
-    await this.client.destroy()
+  async destroy() {
+    this.subscriber.destroy();
+    await this.client.destroy();
   }
 }
 
-let _idCnt = 0
+let _idCnt = 0;
 
 class User {
   /**
@@ -49,30 +53,77 @@ class User {
    * @param {boolean} hasWriteAccess
    * @param {string} userid identifies the user globally.
    */
-  constructor (room, hasWriteAccess, userid) {
-    this.room = room
-    this.hasWriteAccess = hasWriteAccess
+  constructor(room, hasWriteAccess, userid) {
+    this.room = room;
+    this.hasWriteAccess = hasWriteAccess;
     /**
      * @type {string}
      */
-    this.initialRedisSubId = '0'
-    this.subs = new Set()
+    this.initialRedisSubId = "0";
+    this.subs = new Set();
     /**
      * This is just an identifier to keep track of the user for logging purposes.
      */
-    this.id = _idCnt++
+    this.id = _idCnt++;
     /**
      * Identifies the User globally.
      * Note that several clients can have the same userid (e.g. if a user opened several browser
      * windows)
      */
-    this.userid = userid
+    this.userid = userid;
     /**
      * @type {number|null}
      */
-    this.awarenessId = null
-    this.awarenessLastClock = 0
-    this.isClosed = false
+    this.awarenessId = null;
+    this.awarenessLastClock = 0;
+    this.isClosed = false;
+  }
+}
+
+class RenderSourceClient {
+  /**
+   * @param {string} room
+   * @param {number} renderSourceId
+   */
+  constructor(room, renderSourceId) {
+    this.room = room;
+    this.renderSourceId = renderSourceId;
+    /**
+     * @type {string}
+     */
+    this.initialRedisSubId = "0";
+    this.subs = new Set();
+    /**
+     * This is just an identifier to keep track of the user for logging purposes.
+     */
+    this.id = _idCnt++;
+
+    this.isClosed = false;
+  }
+}
+
+class RenderSource {
+  /**
+   * @param {string} room
+   * @param {number} renderSourceId
+   */
+  constructor(room, renderSourceId) {
+    this.redis = createClient({
+      url: redisUrl,
+    });
+    this.room = room;
+    this.renderSourceId = renderSourceId;
+    /**
+     * @type {string}
+     */
+    this.initialRedisSubId = "0";
+    this.subs = new Set();
+    /**
+     * This is just an identifier to keep track of the user for logging purposes.
+     */
+    this.id = _idCnt++;
+
+    this.isClosed = false;
   }
 }
 
@@ -81,133 +132,371 @@ class User {
  * @param {uws.RecognizedString} pattern
  * @param {import('./storage.js').AbstractStorage} store
  * @param {function(uws.HttpRequest): Promise<{ hasWriteAccess: boolean, room: string, userid: string }>} checkAuth
+ * @param {function(uws.HttpRequest): Promise<{ room: string, renderSourceId: number }>} checkTokenAuth
  * @param {Object} conf
  * @param {string} [conf.redisPrefix]
  * @param {(room:string,docname:string,client:api.Api)=>void} [conf.initDocCallback] - this is called when a doc is
  * accessed, but it doesn't exist. You could populate the doc here. However, this function could be
  * called several times, until some content exists. So you need to handle concurrent calls.
  */
-export const registerYWebsocketServer = async (app, pattern, store, checkAuth, { redisPrefix = 'y', initDocCallback = () => {} } = {}) => {
+export const registerYWebsocketServer = async (
+  app,
+  pattern,
+  store,
+  checkAuth,
+  checkTokenAuth,
+  { redisPrefix = "y", initDocCallback = () => {} } = {}
+) => {
   const [client, subscriber] = await promise.all([
     api.createApiClient(store, redisPrefix),
-    createSubscriber(store, redisPrefix)
-  ])
+    createSubscriber(store, redisPrefix),
+  ]);
   /**
    * @param {string} stream
    * @param {Array<Uint8Array>} messages
    */
   const redisMessageSubscriber = (stream, messages) => {
     if (app.numSubscribers(stream) === 0) {
-      subscriber.unsubscribe(stream, redisMessageSubscriber)
+      subscriber.unsubscribe(stream, redisMessageSubscriber);
     }
-    const message = messages.length === 1
-      ? messages[0]
-      : encoding.encode(encoder => messages.forEach(message => {
-        encoding.writeUint8Array(encoder, message)
-      }))
-    app.publish(stream, message, true, false)
-  }
-  app.ws(pattern, /** @type {uws.WebSocketBehavior<User>} */ ({
-    compression: uws.SHARED_COMPRESSOR,
-    maxPayloadLength: 100 * 1024 * 1024,
-    idleTimeout: 60,
-    sendPingsAutomatically: true,
+    const message =
+      messages.length === 1
+        ? messages[0]
+        : encoding.encode((encoder) =>
+            messages.forEach((message) => {
+              encoding.writeUint8Array(encoder, message);
+            })
+          );
+    app.publish(stream, message, true, false);
+  };
+  app.ws(
+    "/overlay/:id/edit",
+    /** @type {uws.WebSocketBehavior<User>} */ ({
+      compression: uws.SHARED_COMPRESSOR,
+      maxPayloadLength: 100 * 1024 * 1024,
+      idleTimeout: 60,
+      sendPingsAutomatically: true,
+      upgrade: async (res, req, context) => {
+        const url = req.getUrl();
+        const headerWsKey = req.getHeader("sec-websocket-key");
+        const headerWsProtocol = req.getHeader("sec-websocket-protocol");
+        const headerWsExtensions = req.getHeader("sec-websocket-extensions");
+        let aborted = false;
+        res.onAborted(() => {
+          console.log("Upgrading client aborted", { url });
+          aborted = true;
+        });
+        try {
+          const { hasWriteAccess, room, userid } = await checkAuth(req);
+          if (aborted) return;
+          res.cork(() => {
+            res.upgrade(
+              new User(room, hasWriteAccess, userid),
+              headerWsKey,
+              headerWsProtocol,
+              headerWsExtensions,
+              context
+            );
+          });
+        } catch (err) {
+          console.log(`Failed to auth to endpoint ${url}`, err);
+          if (aborted) return;
+          res.cork(() => {
+            res.writeStatus("401 Unauthorized").end("Unauthorized");
+          });
+        }
+      },
+      open: async (ws) => {
+        const user = ws.getUserData();
+        log(() => [
+          "client connected (uid=",
+          user.id,
+          ", ip=",
+          Buffer.from(ws.getRemoteAddressAsText()).toString(),
+          ")",
+        ]);
+        const stream = api.computeRedisRoomStreamName(
+          user.room,
+          "index",
+          redisPrefix
+        );
+        user.subs.add(stream);
+        ws.subscribe(stream);
+        user.initialRedisSubId = subscriber.subscribe(
+          stream,
+          redisMessageSubscriber
+        ).redisId;
+        const indexDoc = await client.getDoc(user.room, "index");
+        if (indexDoc.ydoc.store.clients.size === 0) {
+          initDocCallback(user.room, "index", client);
+        }
+        if (user.isClosed) return;
+        ws.cork(() => {
+          ws.send(
+            protocol.encodeSyncStep1(Y.encodeStateVector(indexDoc.ydoc)),
+            true,
+            false
+          );
+          ws.send(
+            protocol.encodeSyncStep2(Y.encodeStateAsUpdate(indexDoc.ydoc)),
+            true,
+            true
+          );
+          if (indexDoc.awareness.states.size > 0) {
+            ws.send(
+              protocol.encodeAwarenessUpdate(
+                indexDoc.awareness,
+                array.from(indexDoc.awareness.states.keys())
+              ),
+              true,
+              true
+            );
+          }
+        });
+        if (
+          api.isSmallerRedisId(indexDoc.redisLastId, user.initialRedisSubId)
+        ) {
+          // our subscription is newer than the content that we received from the api
+          // need to renew subscription id and make sure that we catch the latest content.
+          subscriber.ensureSubId(stream, indexDoc.redisLastId);
+        }
+      },
+      message: (ws, messageBuffer) => {
+        const user = ws.getUserData();
+        // don't read any messages from users without write access
+        if (!user.hasWriteAccess) return;
+        // It is important to copy the data here
+        const message = Buffer.from(
+          messageBuffer.slice(0, messageBuffer.byteLength)
+        );
+        if (
+          // filter out messages that we simply want to propagate to all clients
+          // sync update or sync step 2
+          (message[0] === protocol.messageSync &&
+            (message[1] === protocol.messageSyncUpdate ||
+              message[1] === protocol.messageSyncStep2)) ||
+          // awareness update
+          message[0] === protocol.messageAwareness
+        ) {
+          if (message[0] === protocol.messageAwareness) {
+            const decoder = decoding.createDecoder(message);
+            decoding.readVarUint(decoder); // read message type
+            decoding.readVarUint(decoder); // read length of awareness update
+            const alen = decoding.readVarUint(decoder); // number of awareness updates
+            const awId = decoding.readVarUint(decoder);
+            if (
+              alen === 1 &&
+              (user.awarenessId === null || user.awarenessId === awId)
+            ) {
+              // only update awareness if len=1
+              user.awarenessId = awId;
+              user.awarenessLastClock = decoding.readVarUint(decoder);
+            }
+          }
+          client.addMessage(user.room, "index", message);
+        } else if (
+          message[0] === protocol.messageSync &&
+          message[1] === protocol.messageSyncStep1
+        ) {
+          // sync step 1
+          // can be safely ignored because we send the full initial state at the beginning
+        } else {
+          console.error("Unexpected message type", message);
+        }
+      },
+      close: (ws, code, message) => {
+        const user = ws.getUserData();
+        user.awarenessId &&
+          client.addMessage(
+            user.room,
+            "index",
+            Buffer.from(
+              protocol.encodeAwarenessUserDisconnected(
+                user.awarenessId,
+                user.awarenessLastClock
+              )
+            )
+          );
+        user.isClosed = true;
+        log(() => [
+          "client connection closed (uid=",
+          user.id,
+          ", code=",
+          code,
+          ', message="',
+          Buffer.from(message).toString(),
+          '")',
+        ]);
+        user.subs.forEach((topic) => {
+          if (app.numSubscribers(topic) === 0) {
+            subscriber.unsubscribe(topic, redisMessageSubscriber);
+          }
+        });
+      },
+    })
+  );
+
+  // Readonly
+  app.ws(
+    "/overlay/:id/view",
+    /** @type {uws.WebSocketBehavior<User>} */ ({
+      compression: uws.SHARED_COMPRESSOR,
+      maxPayloadLength: 100 * 1024 * 1024,
+      idleTimeout: 60,
+      sendPingsAutomatically: true,
+
+      upgrade: async (res, req, context) => {
+        const url = req.getUrl();
+        const headerWsKey = req.getHeader("sec-websocket-key");
+        const headerWsProtocol = req.getHeader("sec-websocket-protocol");
+        const headerWsExtensions = req.getHeader("sec-websocket-extensions");
+        let aborted = false;
+        res.onAborted(() => {
+          console.log("Upgrading client aborted", { url });
+          aborted = true;
+        });
+        try {
+          const { room, renderSourceId } = await checkTokenAuth(req);
+          if (aborted) return;
+          res.cork(() => {
+            res.upgrade(
+              new RenderSourceClient(room, renderSourceId),
+              headerWsKey,
+              headerWsProtocol,
+              headerWsExtensions,
+              context
+            );
+          });
+        } catch (err) {
+          console.log(`Failed to auth to endpoint ${url}`, err);
+          if (aborted) return;
+          res.cork(() => {
+            res.writeStatus("401 Unauthorized").end("Unauthorized");
+          });
+        }
+      },
+      open: async (ws) => {
+        const user = ws.getUserData();
+        const stream = api.computeRedisRoomStreamName(
+          user.room,
+          "index",
+          redisPrefix
+        );
+        user.subs.add(stream);
+        ws.subscribe(stream);
+        user.initialRedisSubId = subscriber.subscribe(
+          stream,
+          redisMessageSubscriber
+        ).redisId;
+        const indexDoc = await client.getDoc(user.room, "index");
+        if (indexDoc.ydoc.store.clients.size === 0) {
+          initDocCallback(user.room, "index", client);
+        }
+        if (user.isClosed) return;
+        ws.cork(() => {
+          ws.send(
+            protocol.encodeSyncStep1(Y.encodeStateVector(indexDoc.ydoc)),
+            true,
+            false
+          );
+          ws.send(
+            protocol.encodeSyncStep2(Y.encodeStateAsUpdate(indexDoc.ydoc)),
+            true,
+            true
+          );
+        });
+        if (
+          api.isSmallerRedisId(indexDoc.redisLastId, user.initialRedisSubId)
+        ) {
+          // our subscription is newer than the content that we received from the api
+          // need to renew subscription id and make sure that we catch the latest content.
+          subscriber.ensureSubId(stream, indexDoc.redisLastId);
+        }
+      },
+      message: (ws, messageBuffer) => {
+        return;
+      },
+      close: (ws, code, message) => {
+        const user = ws.getUserData();
+        user.isClosed = true;
+        user.subs.forEach((topic) => {
+          if (app.numSubscribers(topic) === 0) {
+            subscriber.unsubscribe(topic, redisMessageSubscriber);
+          }
+        });
+      },
+    })
+  );
+
+  app.ws("/rendersource/:token", {
     upgrade: async (res, req, context) => {
-      const url = req.getUrl()
-      const headerWsKey = req.getHeader('sec-websocket-key')
-      const headerWsProtocol = req.getHeader('sec-websocket-protocol')
-      const headerWsExtensions = req.getHeader('sec-websocket-extensions')
-      let aborted = false
+      const url = req.getUrl();
+      const headerWsKey = req.getHeader("sec-websocket-key");
+      const headerWsProtocol = req.getHeader("sec-websocket-protocol");
+      const headerWsExtensions = req.getHeader("sec-websocket-extensions");
+      let aborted = false;
       res.onAborted(() => {
-        console.log('Upgrading client aborted', { url })
-        aborted = true
-      })
+        console.log("Upgrading client aborted", { url });
+        aborted = true;
+      });
+      const token = req.getParameter(0);
       try {
-        const { hasWriteAccess, room, userid } = await checkAuth(req)
-        if (aborted) return
-        res.cork(() => {
-          res.upgrade(
-            new User(room, hasWriteAccess, userid),
-            headerWsKey,
-            headerWsProtocol,
-            headerWsExtensions,
-            context
-          )
-        })
+        if (aborted) return;
+        const response = await fetch(
+          `http://backend:7001/api/rendersource/token/${token}`
+        );
+        if (response.ok) {
+          const renderSource = await response.json();
+          res.cork(() => {
+            res.upgrade(
+              new RenderSource(
+                renderSource.overlayId,
+                renderSource.renderSourceId
+              ),
+              headerWsKey,
+              headerWsProtocol,
+              headerWsExtensions,
+              context
+            );
+          });
+        } else {
+          throw new Error("rendersource not found");
+        }
       } catch (err) {
-        console.log(`Failed to auth to endpoint ${url}`, err)
-        if (aborted) return
+        console.log(`Failed to auth to endpoint ${url}`, err);
+        if (aborted) return;
         res.cork(() => {
-          res.writeStatus('401 Unauthorized').end('Unauthorized')
-        })
+          res.writeStatus("401 Unauthorized").end("Unauthorized");
+        });
       }
     },
     open: async (ws) => {
-      const user = ws.getUserData()
-      log(() => ['client connected (uid=', user.id, ', ip=', Buffer.from(ws.getRemoteAddressAsText()).toString(), ')'])
-      const stream = api.computeRedisRoomStreamName(user.room, 'index', redisPrefix)
-      user.subs.add(stream)
-      ws.subscribe(stream)
-      user.initialRedisSubId = subscriber.subscribe(stream, redisMessageSubscriber).redisId
-      const indexDoc = await client.getDoc(user.room, 'index')
-      if (indexDoc.ydoc.store.clients.size === 0) {
-        initDocCallback(user.room, 'index', client)
-      }
-      if (user.isClosed) return
-      ws.cork(() => {
-        ws.send(protocol.encodeSyncStep1(Y.encodeStateVector(indexDoc.ydoc)), true, false)
-        ws.send(protocol.encodeSyncStep2(Y.encodeStateAsUpdate(indexDoc.ydoc)), true, true)
-        if (indexDoc.awareness.states.size > 0) {
-          ws.send(protocol.encodeAwarenessUpdate(indexDoc.awareness, array.from(indexDoc.awareness.states.keys())), true, true)
+      const user = ws.getUserData();
+      await user.redis.connect();
+      const stream = `rendersource-${user.renderSourceId}`;
+
+      const onMessage = (message) => {
+        console.log(message);
+        ws.send(message);
+      };
+
+      user.redisStreamChannel = stream;
+      user.redisOnMessage = onMessage;
+
+      user.redis.subscribe(stream, onMessage);
+    },
+    close: async (ws, code, message) => {
+      const user = ws.getUserData();
+      if (user.redis && user.redisStreamChannel && user.redisOnMessage) {
+        try {
+          await user.redis.unsubscribe(user.redisStreamChannel);
+          await user.redis.quit();
+        } catch (err) {
+          console.error("Failed to unsubscribe from Redis:", err);
         }
-      })
-      if (api.isSmallerRedisId(indexDoc.redisLastId, user.initialRedisSubId)) {
-        // our subscription is newer than the content that we received from the api
-        // need to renew subscription id and make sure that we catch the latest content.
-        subscriber.ensureSubId(stream, indexDoc.redisLastId)
       }
     },
-    message: (ws, messageBuffer) => {
-      const user = ws.getUserData()
-      // don't read any messages from users without write access
-      if (!user.hasWriteAccess) return
-      // It is important to copy the data here
-      const message = Buffer.from(messageBuffer.slice(0, messageBuffer.byteLength))
-      if ( // filter out messages that we simply want to propagate to all clients
-        // sync update or sync step 2
-        (message[0] === protocol.messageSync && (message[1] === protocol.messageSyncUpdate || message[1] === protocol.messageSyncStep2)) ||
-        // awareness update
-        message[0] === protocol.messageAwareness
-      ) {
-        if (message[0] === protocol.messageAwareness) {
-          const decoder = decoding.createDecoder(message)
-          decoding.readVarUint(decoder) // read message type
-          decoding.readVarUint(decoder) // read length of awareness update
-          const alen = decoding.readVarUint(decoder) // number of awareness updates
-          const awId = decoding.readVarUint(decoder)
-          if (alen === 1 && (user.awarenessId === null || user.awarenessId === awId)) { // only update awareness if len=1
-            user.awarenessId = awId
-            user.awarenessLastClock = decoding.readVarUint(decoder)
-          }
-        }
-        client.addMessage(user.room, 'index', message)
-      } else if (message[0] === protocol.messageSync && message[1] === protocol.messageSyncStep1) { // sync step 1
-        // can be safely ignored because we send the full initial state at the beginning
-      } else {
-        console.error('Unexpected message type', message)
-      }
-    },
-    close: (ws, code, message) => {
-      const user = ws.getUserData()
-      user.awarenessId && client.addMessage(user.room, 'index', Buffer.from(protocol.encodeAwarenessUserDisconnected(user.awarenessId, user.awarenessLastClock)))
-      user.isClosed = true
-      log(() => ['client connection closed (uid=', user.id, ', code=', code, ', message="', Buffer.from(message).toString(), '")'])
-      user.subs.forEach(topic => {
-        if (app.numSubscribers(topic) === 0) {
-          subscriber.unsubscribe(topic, redisMessageSubscriber)
-        }
-      })
-    }
-  }))
-  return new YWebsocketServer(app, client, subscriber)
-}
+  });
+
+  return new YWebsocketServer(app, client, subscriber);
+};
