@@ -1,8 +1,6 @@
 import { signIn, signUp } from "supertokens-web-js/recipe/emailpassword";
 import { getAuthorisationURLWithQueryParamsAndSetState } from "supertokens-web-js/recipe/thirdparty";
-import Session from "supertokens-web-js/recipe/session";
-import { GetAPI, PostFormAPI } from "./RequestService";
-import { useAuthStore } from "@/store/auth";
+import { PostFormAPI } from "./RequestService";
 
 export const signup = async (email: string, password: string) => {
   try {
@@ -70,9 +68,6 @@ export const login = async (email: string, password: string) => {
     } else if (response.status === "SIGN_IN_NOT_ALLOWED") {
       return { success: false, error: response.reason };
     } else {
-      getUser(() => {
-        window.location.replace("/auth/user/create");
-      });
       return { success: true };
     }
   } catch (err: any) {
@@ -100,27 +95,10 @@ export const googleLogin = async () => {
   }
 };
 
-export const getUser = async (notExists: () => void) => {
-  const userId = await Session.getUserId();
-  if (userId) {
-    const response = await GetAPI("/user/me");
-    if (response.success) {
-      useAuthStore.getState().setAuth(response.data);
-      return true;
-    } else {
-      notExists();
-    }
-  } else {
-    return false;
-  }
-};
-
 export const setUsername = async (formData: FormData) => {
   const response = await PostFormAPI("/user/create", formData);
   if (response.success) {
-    getUser(() => {
-      window.location.replace("/auth/user/create");
-    });
+    window.location.replace("/");
   } else {
     console.log(response.error);
   }

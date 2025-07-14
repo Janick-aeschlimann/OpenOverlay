@@ -10,14 +10,13 @@ import {
 import { Input } from "@/components/shadcn/ui/input";
 import { Label } from "@/components/shadcn/ui/label";
 import { useEffect, useState, type FormEvent } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { googleLogin, login } from "@/services/AuthService";
 
 export function LoginForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
-  const navigate = useNavigate();
   const [error, setError] = useState<string | null>(null);
   const location = useLocation();
   const errorCallback = location.state?.error || null;
@@ -37,7 +36,7 @@ export function LoginForm({
 
     const status = await login(email, password);
     if (status?.success) {
-      navigate("/");
+      window.location.replace("/");
     } else {
       setError(status?.error);
     }

@@ -10,14 +10,12 @@ import {
 import { Input } from "@/components/shadcn/ui/input";
 import { Label } from "@/components/shadcn/ui/label";
 import { useState, type FormEvent } from "react";
-import { useNavigate } from "react-router-dom";
 import { googleLogin, signup } from "@/services/AuthService";
 
 export function SignUpForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
-  const navigate = useNavigate();
   const [error, setError] = useState<string | null>(null);
 
   const handleSignUp = async (e: FormEvent) => {
@@ -30,7 +28,7 @@ export function SignUpForm({
     const status = await signup(email, password);
 
     if (status?.success) {
-      navigate("/");
+      window.location.replace("/");
     } else {
       setError(status?.error);
     }

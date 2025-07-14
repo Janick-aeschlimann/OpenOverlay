@@ -1,16 +1,13 @@
 import { SignUpForm } from "@/components/shadcn/signup-form";
 import { GalleryVerticalEnd } from "lucide-react";
 import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import Session from "supertokens-web-js/recipe/session";
 
 const SignUpPage: React.FC = () => {
-  const navigate = useNavigate();
-
   useEffect(() => {
     const checkSession = async () => {
       if (await Session.doesSessionExist()) {
-        navigate("/");
+        window.location.replace("/");
       }
     };
     checkSession();

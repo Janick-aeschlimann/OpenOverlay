@@ -3,6 +3,8 @@ import {
   GalleryVerticalEnd,
   Home,
   LayoutGrid,
+  Monitor,
+  Plus,
   Settings,
   Users,
 } from "lucide-react";
@@ -36,6 +38,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { activeWorkspace } = useWorkspaceStore();
 
   const [overlays, setOverlays] = useState<Array<any>>([]);
+  const [renderSources, setRenderSources] = useState<Array<any>>([]);
 
   useEffect(() => {
     const fetchOverlays = async () => {
@@ -46,21 +49,72 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         setOverlays(response.data);
       }
     };
+    const fetchRenderSources = async () => {
+      const response = await GetAPI(
+        `/workspace/${activeWorkspace?.workspaceId}/rendersource`
+      );
+      if (response.success) {
+        setRenderSources(response.data);
+      }
+    };
     if (activeWorkspace) {
       fetchOverlays();
+      fetchRenderSources();
     }
   }, [activeWorkspace]);
 
-  const data = {
+  const data: {
+    workspaceNav: Array<{
+      name: string;
+      url: string;
+      icon: React.ForwardRefExoticComponent<any>;
+      children?: Array<{
+        name: string;
+        url: string;
+        icon?: React.ForwardRefExoticComponent<any>;
+        grey?: boolean;
+      }>;
+    }>;
+    mainNav: Array<{
+      name: string;
+      url: string;
+      icon: React.ForwardRefExoticComponent<any>;
+    }>;
+  } = {
     workspaceNav: [
       {
         name: "Overlays",
         url: `/workspace/${activeWorkspace?.slug}/overlays`,
         icon: GalleryVerticalEnd,
-        children: overlays.map((overlay) => ({
-          name: overlay.name,
-          url: `/workspace/${activeWorkspace?.workspaceId}/overlay/${overlay.overlayId}`,
-        })),
+        children: [
+          ...overlays.map((overlay) => ({
+            name: overlay.name,
+            url: `/workspace/${activeWorkspace?.slug}/overlay/${overlay.overlayId}`,
+          })),
+          {
+            name: "New Overlay",
+            url: `/workspace/${activeWorkspace?.slug}/overlay/new`,
+            icon: Plus,
+            grey: true,
+          },
+        ],
+      },
+      {
+        name: "Render Sources",
+        url: `/workspace/${activeWorkspace?.slug}/renderoverlays`,
+        icon: Monitor,
+        children: [
+          ...renderSources.map((renderSource) => ({
+            name: renderSource.name,
+            url: `/workspace/${activeWorkspace?.slug}`,
+          })),
+          {
+            name: "New Render Source",
+            url: `/workspace/${activeWorkspace?.slug}/rendersource/new`,
+            icon: Plus,
+            grey: true,
+          },
+        ],
       },
       {
         name: "Members",
@@ -121,7 +175,22 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                                 <SidebarMenuSubItem key={subItem.name}>
                                   <SidebarMenuSubButton asChild>
                                     <a href={subItem.url}>
-                                      <span>{subItem.name}</span>
+                                      <span
+                                        style={{
+                                          color:
+                                            subItem.grey == true ? "gray" : "",
+                                        }}
+                                      >
+                                        {subItem.icon && <subItem.icon />}
+                                      </span>
+                                      <span
+                                        style={{
+                                          color:
+                                            subItem.grey == true ? "gray" : "",
+                                        }}
+                                      >
+                                        {subItem.name}
+                                      </span>
                                     </a>
                                   </SidebarMenuSubButton>
                                 </SidebarMenuSubItem>
@@ -133,7 +202,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                     );
                   } else {
                     return (
-                      <SidebarMenuItem className="select-none cursor-pointer">
+                      <SidebarMenuItem
+                        key={item.name}
+                        className="select-none cursor-pointer"
+                      >
                         <SidebarMenuButton asChild>
                           <Link to={item.url}>
                             <item.icon />
@@ -154,7 +226,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <SidebarGroupContent>
             <SidebarMenu>
               {data.mainNav.map((item) => (
-                <SidebarMenuItem className="select-none cursor-pointer">
+                <SidebarMenuItem
+                  key={item.name}
+                  className="select-none cursor-pointer"
+                >
                   <SidebarMenuButton asChild>
                     <Link to={item.url}>
                       <item.icon />

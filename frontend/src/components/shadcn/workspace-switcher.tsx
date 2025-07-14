@@ -16,33 +16,13 @@ import {
   useSidebar,
 } from "@/components/shadcn/ui/sidebar";
 import { useWorkspaceStore } from "@/store/workspace";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 
 export function WorkspaceSwitcher() {
   const { isMobile } = useSidebar();
-  const {
-    activeWorkspace,
-    workspaces,
-    setWorkspace,
-    setWorkspaceSlug,
-    fetchWorkspaces,
-    getLastWorkspace,
-  } = useWorkspaceStore();
-  const location = useLocation();
+  const { activeWorkspace, workspaces, setWorkspace } = useWorkspaceStore();
   const navigate = useNavigate();
-
-  useEffect(() => {
-    const initWorkspace = async () => {
-      await fetchWorkspaces();
-      if (location.pathname.startsWith("/workspace/")) {
-        setWorkspaceSlug(location.pathname.split("/")[2]);
-      } else {
-        getLastWorkspace();
-      }
-    };
-    initWorkspace();
-  }, []);
 
   useEffect(() => {
     console.log(activeWorkspace);

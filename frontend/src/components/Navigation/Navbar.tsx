@@ -1,8 +1,6 @@
 import { Button } from "@/components/shadcn/ui/button";
 import ThemeToggle from "@/components/ThemeToggle";
 
-import Session from "supertokens-web-js/recipe/session";
-import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/store/auth";
 import { SidebarTrigger } from "@/components/shadcn/ui/sidebar";
 import { Separator } from "@/components/shadcn/ui/separator";
@@ -24,14 +22,7 @@ export interface INavbarProps {
 }
 
 const Navbar: React.FC<INavbarProps> = (props) => {
-  const user = useAuthStore((state) => state.user);
-
-  const navigate = useNavigate();
-
-  const logout = async () => {
-    await Session.signOut();
-    navigate("/login");
-  };
+  const { user, logout } = useAuthStore();
 
   return (
     <>
