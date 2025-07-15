@@ -104,14 +104,14 @@ class RenderSourceClient {
 
 class RenderSource {
   /**
-   * @param {string} room
+   * @param {string} overlayId
    * @param {number} renderSourceId
    */
-  constructor(room, renderSourceId) {
+  constructor(overlayId, renderSourceId) {
     this.redis = createClient({
       url: redisUrl,
     });
-    this.room = room;
+    this.overlayId = overlayId;
     this.renderSourceId = renderSourceId;
     /**
      * @type {string}
@@ -475,6 +475,7 @@ export const registerYWebsocketServer = async (
       await user.redis.connect();
       const stream = `rendersource-${user.renderSourceId}`;
 
+      ws.send(JSON.stringify({ type: "init", overlayId: user.overlayId }));
       const onMessage = (message) => {
         console.log(message);
         ws.send(message);

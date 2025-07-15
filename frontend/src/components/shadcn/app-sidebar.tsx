@@ -106,7 +106,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         children: [
           ...renderSources.map((renderSource) => ({
             name: renderSource.name,
-            url: `/workspace/${activeWorkspace?.slug}`,
+            url: `/render/${renderSource.token}`,
           })),
           {
             name: "New Render Source",

@@ -1,10 +1,31 @@
 import type { CanvasObject } from "@/types/types";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useParams } from "react-router-dom";
 import { WebsocketProvider } from "y-websocket";
 import * as Y from "yjs";
+import { create } from "zustand";
+
+const useSceneStore = create<{
+  currentScene: number;
+  switchScene: () => void;
+}>((set) => ({
+  currentScene: 1,
+  switchScene: () =>
+    set((state: any) => {
+      console.log(state);
+      return { currentScene: state.currentScene == 1 ? 2 : 1 };
+    }),
+}));
 
 const ReadonlyCanvas: React.FC = () => {
-  const [objects, setObjects] = useState<CanvasObject[]>();
+  const [objects1, setObjects1] = useState<CanvasObject[]>();
+  const [objects2, setObjects2] = useState<CanvasObject[]>();
+
+  const providerRef = useRef<WebsocketProvider>(null);
+
+  const { token } = useParams();
+
+  const { currentScene, switchScene } = useSceneStore();
 
   const mapCanvasObject = (y: Y.Map<any>): CanvasObject => {
     if (y) {
@@ -21,18 +42,38 @@ const ReadonlyCanvas: React.FC = () => {
   };
 
   useEffect(() => {
+    const ws = new WebSocket(
+      `${import.meta.env.VITE_WS_URL}/rendersource/${token}`
+    );
+    ws.onmessage = (event) => {
+      const message = JSON.parse(event.data);
+      console.log(message);
+      if (message.type == "init") {
+        initRenderSource(message.overlayId);
+      }
+      if (message.type == "switch-overlay") {
+        switchOverlay(message.newOverlayId);
+      }
+    };
+  }, []);
+
+  const setupYjs = (overlayId: number, scene: number) => {
+    if (providerRef.current) {
+      providerRef.current.destroy();
+    }
     const ydoc = new Y.Doc();
     const provider = new WebsocketProvider(
       `${import.meta.env.VITE_WS_URL}`,
-      `overlay/1/view`,
+      `overlay/${overlayId}/view`,
       ydoc,
       {
         params: {
-          token:
-            "facca0ea30c97787a0c80d92b493d22c449f977f3769b07b090a469446ece5ffc6399f3cc43ba3c6d531324e1384bcab5c33f60c5ec7818eec6e5414a51db8d6",
+          token: token!,
         },
       }
     );
+
+    providerRef.current = provider;
 
     console.log(provider);
     provider.ws?.addEventListener("close", (event: any) => {
@@ -42,22 +83,69 @@ const ReadonlyCanvas: React.FC = () => {
     const yarray = ydoc.getArray<Y.Map<any>>("objects");
 
     yarray.observeDeep(() => {
-      setObjects(yarray.toArray().map(mapCanvasObject));
+      if (scene == 1) {
+        setObjects1(yarray.toArray().map(mapCanvasObject));
+      } else {
+        setObjects2(yarray.toArray().map(mapCanvasObject));
+      }
     });
-  }, []);
+  };
+
+  const switchOverlay = (overlayId: number) => {
+    const state = useSceneStore.getState();
+    const scene = state.currentScene == 1 ? 2 : 1;
+    setupYjs(overlayId, scene);
+    setTimeout(() => {
+      switchScene();
+    }, 1000);
+  };
+
+  const initRenderSource = (overlayId: number) => {
+    setupYjs(overlayId, 1);
+  };
+
   return (
     <>
-      {objects?.map((object) => (
+      <div className="relative w-screen h-screen overflow-hidden">
         <div
-          className="absolute bg-white"
+          className="bg-transparent w-screen h-screen overflow-hidden absolute"
           style={{
-            left: object.x,
-            top: object.y,
-            width: object.width,
-            height: object.height,
+            opacity: currentScene == 1 ? 1 : 0,
+            transition: "opacity 2s ease",
           }}
-        ></div>
-      ))}
+        >
+          {objects1?.map((object) => (
+            <div
+              className="absolute bg-muted"
+              style={{
+                left: object.x,
+                top: object.y,
+                width: object.width,
+                height: object.height,
+              }}
+            ></div>
+          ))}
+        </div>
+        <div
+          className="bg-transparent w-screen h-screen overflow-hidden absolute"
+          style={{
+            opacity: currentScene == 2 ? 1 : 0,
+            transition: "opacity 2s ease",
+          }}
+        >
+          {objects2?.map((object) => (
+            <div
+              className="absolute bg-muted"
+              style={{
+                left: object.x,
+                top: object.y,
+                width: object.width,
+                height: object.height,
+              }}
+            ></div>
+          ))}
+        </div>
+      </div>
     </>
   );
 };
