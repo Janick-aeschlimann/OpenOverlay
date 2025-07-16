@@ -20,6 +20,8 @@ import CreateRenderSource from "./pages/workspace/CreateRenderSourcePage";
 import { useWorkspaceStore } from "./store/workspace";
 import AuthWrapper from "./components/PageWrapper/AuthWrapper";
 import CreateOverlay from "./pages/workspace/CreateOverlayPage";
+import ReadonlyCanvas from "./components/Canvas/ReadonlyCanvas";
+import EditRenderSource from "./pages/workspace/EditRenderSourcePage";
 
 function App() {
   const { fetchWorkspaces, setWorkspaceSlug, getLastWorkspace } =
@@ -69,9 +71,19 @@ function App() {
             <Route
               path="/workspace/:slug"
               element={
-                <Sidebar title="Workspaces">
+                <Sidebar title="Workspace Overview">
                   <ProtectedRoute>
                     <WorkspaceOverview />
+                  </ProtectedRoute>
+                </Sidebar>
+              }
+            />
+            <Route
+              path="/workspace/:slug/rendersource/:renderSourceId"
+              element={
+                <Sidebar title="Render Source">
+                  <ProtectedRoute>
+                    <EditRenderSource />
                   </ProtectedRoute>
                 </Sidebar>
               }
@@ -120,9 +132,17 @@ function App() {
               <Route
                 path="/workspace/:slug/overlay/:id"
                 element={
-                  // <ProtectedRoute>
-                  <OverlayEditor />
-                  // </ProtectedRoute>
+                  <ProtectedRoute>
+                    <OverlayEditor />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/preview/:token"
+                element={
+                  <div className="bg-white">
+                    <ReadonlyCanvas />
+                  </div>
                 }
               />
             </Route>

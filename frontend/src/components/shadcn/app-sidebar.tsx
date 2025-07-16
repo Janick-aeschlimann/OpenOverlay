@@ -106,7 +106,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         children: [
           ...renderSources.map((renderSource) => ({
             name: renderSource.name,
-            url: `/render/${renderSource.token}`,
+            url: `/workspace/${activeWorkspace?.slug}/rendersource/${renderSource.renderSourceId}`,
           })),
           {
             name: "New Render Source",
@@ -174,7 +174,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                               {item.children?.map((subItem) => (
                                 <SidebarMenuSubItem key={subItem.name}>
                                   <SidebarMenuSubButton asChild>
-                                    <a href={subItem.url}>
+                                    <Link to={subItem.url}>
                                       <span
                                         style={{
                                           color:
@@ -191,7 +191,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                                       >
                                         {subItem.name}
                                       </span>
-                                    </a>
+                                    </Link>
                                   </SidebarMenuSubButton>
                                 </SidebarMenuSubItem>
                               ))}

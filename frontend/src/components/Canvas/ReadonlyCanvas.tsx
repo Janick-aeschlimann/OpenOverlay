@@ -116,7 +116,7 @@ const ReadonlyCanvas: React.FC = () => {
         >
           {objects1?.map((object) => (
             <div
-              className="absolute bg-muted"
+              className="absolute bg-[#262626]"
               style={{
                 left: object.x,
                 top: object.y,
@@ -135,7 +135,7 @@ const ReadonlyCanvas: React.FC = () => {
         >
           {objects2?.map((object) => (
             <div
-              className="absolute bg-muted"
+              className="absolute bg-[#262626]"
               style={{
                 left: object.x,
                 top: object.y,

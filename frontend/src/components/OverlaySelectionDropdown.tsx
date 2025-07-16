@@ -16,6 +16,8 @@ import { useWorkspaceStore } from "@/store/workspace";
 
 interface OverlaySelectionDropdownProps {
   onChange?: (overlayId: number | null) => void;
+  disabled?: boolean;
+  value?: number | null;
 }
 
 const OverlaySelectionDropdown: React.FC<OverlaySelectionDropdownProps> = (
@@ -43,10 +45,17 @@ const OverlaySelectionDropdown: React.FC<OverlaySelectionDropdownProps> = (
     }
   }, [activeWorkspace]);
 
+  useEffect(() => {
+    if (props.value) {
+      setOverlayId(props.value);
+    }
+  }, [props.value]);
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
+          disabled={props.disabled}
           variant="outline"
           role="combobox"
           aria-expanded={open}

@@ -64,3 +64,15 @@ export interface Client {
     y: number;
   };
 }
+
+export interface RenderSource {
+  renderSourceId: number;
+  name: string;
+  overlayId: number | null;
+  workspaceId: number;
+  token: string;
+  updated_at: Date;
+  width: number;
+  height: number;
+  frameRate: number;
+}
