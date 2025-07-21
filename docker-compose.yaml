@@ -46,9 +46,13 @@ services:
   db:
     image: mysql:latest
     env_file: ./backend/.env
+    ports:
+      - 3306:3306
     networks:
       - app_network
     restart: unless-stopped
+    volumes:
+      - ./data/db:/var/lib/mysql
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       timeout: 20s
