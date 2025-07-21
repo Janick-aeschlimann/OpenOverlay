@@ -7,6 +7,7 @@ import type { Canvas, CanvasObject } from "@/types/types";
 import { WebsocketProvider } from "y-websocket";
 import Session from "supertokens-web-js/recipe/session";
 import * as Y from "yjs";
+import { useAuthStore } from "@/store/auth";
 
 export class CanvasSync {
   public provider: WebsocketProvider;
@@ -37,8 +38,8 @@ export class CanvasSync {
     const ydoc = new Y.Doc();
 
     const provider = new WebsocketProvider(
-      `${import.meta.env.VITE_WS_URL}`,
-      `overlay/${canvasId}/edit`,
+      `${import.meta.env.VITE_WS_URL}/overlay`,
+      `${canvasId}`,
       ydoc,
       { params: { yauth: accessToken } }
     );
@@ -122,6 +123,19 @@ export class CanvasSync {
       x: presence.cursor.x,
       y: presence.cursor.y,
     });
+  };
+
+  syncUserToYjs = () => {
+    const user = useAuthStore.getState().user;
+    const state = this.canvasStore.getState();
+
+    if (user) {
+      this.provider.awareness.setLocalStateField("user", {
+        userId: user.userId,
+        username: user.username,
+        color: state.presence.color,
+      });
+    }
   };
 
   syncCanvasToYjs = (canvas: Canvas) => {

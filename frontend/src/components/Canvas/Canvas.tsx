@@ -1,5 +1,4 @@
 import { useEffect, useRef } from "react";
-import { useAuthStore } from "@/store/auth";
 import { useParams } from "react-router-dom";
 import CanvasObjectComponent from "@/components/Canvas/CanvasObject";
 import { getCanvasStore, useCanvasStore } from "@/store/canvas";
@@ -37,8 +36,6 @@ const Canvas: React.FC<ICanvasProps> = (props) => {
 
   const lastPos = useRef<{ x: number; y: number } | null>(null);
 
-  const user = useAuthStore().user;
-
   useEffect(() => {
     const connect = async () => {
       const canvasSync = await connectYjs(overlayId);
@@ -68,15 +65,6 @@ const Canvas: React.FC<ICanvasProps> = (props) => {
       connection.canvasSync?.destroy();
     };
   }, []);
-
-  useEffect(() => {
-    const state = canvasStore.getState();
-    state.connection.canvasSync?.provider.awareness.setLocalStateField("user", {
-      userId: user?.userId,
-      username: user?.username,
-      color: state.presence.color,
-    });
-  }, [user]);
 
   const handleMouseMove = (event: MouseEvent) => {
     if (lastPos.current) {

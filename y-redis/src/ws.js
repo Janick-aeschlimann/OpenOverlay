@@ -170,7 +170,7 @@ export const registerYWebsocketServer = async (
     app.publish(stream, message, true, false);
   };
   app.ws(
-    "/overlay/:id/edit",
+    "/overlay/:id",
     /** @type {uws.WebSocketBehavior<User>} */ ({
       compression: uws.SHARED_COMPRESSOR,
       maxPayloadLength: 100 * 1024 * 1024,

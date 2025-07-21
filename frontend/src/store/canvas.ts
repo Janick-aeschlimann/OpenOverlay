@@ -115,6 +115,7 @@ export const createCanvasStore = (overlayId: number) =>
         connectYjs: async (overlayId) => {
           const canvasSync = await CanvasSync.create(overlayId);
           canvasSync.syncToLocal();
+          canvasSync.syncUserToYjs();
 
           set({
             connection: {
