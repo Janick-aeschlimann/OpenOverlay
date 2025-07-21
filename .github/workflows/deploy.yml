@@ -15,23 +15,17 @@ jobs:
           mkdir -p ~/.ssh
           ssh-keyscan -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
 
-      - name: Checkout Code
-        uses: actions/checkout@v3
-
       - name: Set up SSH
         uses: webfactory/ssh-agent@v0.7.0
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-      - name: Copy Project Files to Server
+      - name: Git Pull & Deploy on Server
         run: |
-          rsync -avz --exclude '.git' --exclude 'node_modules' -e "ssh -p ${{ secrets.SSH_PORT }}" ./ \
-            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ secrets.TARGET_DIR }}
-
-      - name: Deploy via SSH
-        run: |
-          ssh -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
+          ssh -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << EOF
             cd ${{ secrets.TARGET_DIR }}
+            git reset --hard
+            git pull origin main
             docker compose down
             docker compose build
             docker compose up -d
