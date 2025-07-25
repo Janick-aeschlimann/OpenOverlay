@@ -13,6 +13,9 @@ import {
 
 import overlayRoutes from "./workspaceRoutes/overlayRoutes.js";
 import renderSourceRoutes from "./workspaceRoutes/renderSourceRoutes.js";
+import memberRoutes from "./workspaceRoutes/memberRoutes.js";
+import inviteRoutes from "./workspaceRoutes/inviteRoutes.js";
+import roleRoutes from "./workspaceRoutes/roleRoutes.js";
 
 router.get("/", verifySession(), getWorkspaces);
 router.get("/owned", verifySession(), getOwnedWorkspaces);
@@ -22,5 +25,8 @@ router.post("/create", verifySession(), createWorkspace);
 
 router.use("/:workspaceId/overlay", overlayRoutes);
 router.use("/:workspaceId/rendersource", renderSourceRoutes);
+router.use("/:workspaceId/member", memberRoutes);
+router.use("/:workspaceId/invite", inviteRoutes);
+router.use("/:workspaceId/role", roleRoutes);
 
 export default router;

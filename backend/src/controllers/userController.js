@@ -4,7 +4,7 @@ import SuperTokens from "supertokens-node";
 import fs from "fs";
 import path from "path";
 
-const getUserData = async (userId) => {
+export const getUserData = async (userId) => {
   const [result] = await db.query("SELECT * FROM user WHERE userId = ?", [userId]);
 
   if (result[0]) {

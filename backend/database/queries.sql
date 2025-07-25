@@ -19,3 +19,11 @@ FROM workspace w
 LEFT JOIN workspace_role wr ON w.workspaceId = wr.workspaceId
 LEFT JOIN workspace_access wa ON wr.roleId = wa.roleId
 WHERE w.ownerId = ? OR wa.userId = ?;
+
+#workspace members
+SELECT 
+  us.*, wr.name, wr.roleId
+FROM workspace_role wr
+INNER JOIN workspace_access wa ON wr.roleId = wa.roleId
+INNER JOIN user us ON wa.userId = us.userId
+WHERE wr.workspaceId = 1;
