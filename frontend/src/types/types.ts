@@ -76,3 +76,23 @@ export interface RenderSource {
   height: number;
   frameRate: number;
 }
+
+export interface Member {
+  userId: string;
+  username: string;
+  created_at: Date;
+  profile_picture: string | null;
+  role: string;
+}
+
+export interface Invite {
+  workspaceInviteId: number;
+  token: string;
+  created_by: {
+    username: string;
+  };
+  expires_at: Date;
+  usages: number;
+  max_usages: number;
+  role: string;
+}

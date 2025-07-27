@@ -22,6 +22,8 @@ import AuthWrapper from "./components/PageWrapper/AuthWrapper";
 import CreateOverlay from "./pages/workspace/CreateOverlayPage";
 import ReadonlyCanvas from "./components/Canvas/ReadonlyCanvas";
 import EditRenderSource from "./pages/workspace/EditRenderSourcePage";
+import Members from "./pages/workspace/MemersPage";
+import InvitePage from "./pages/InvitePage";
 
 function App() {
   const { fetchWorkspaces, setWorkspaceSlug, getLastWorkspace } =
@@ -88,6 +90,16 @@ function App() {
                 </Sidebar>
               }
             />
+            <Route
+              path="/workspace/:slug/members"
+              element={
+                <Sidebar title="Members">
+                  <ProtectedRoute>
+                    <Members />
+                  </ProtectedRoute>
+                </Sidebar>
+              }
+            />
 
             {/* DefaultWrapper */}
             <Route element={<DefaultWrapper />}>
@@ -143,6 +155,14 @@ function App() {
                   <div className="bg-white">
                     <ReadonlyCanvas />
                   </div>
+                }
+              />
+              <Route
+                path="/invite/:token"
+                element={
+                  <ProtectedRoute>
+                    <InvitePage />
+                  </ProtectedRoute>
                 }
               />
             </Route>

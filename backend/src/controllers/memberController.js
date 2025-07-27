@@ -11,7 +11,7 @@ export const getWorkspaceMembers = async (req, res) => {
 
   const [members] = await db.query(
     `SELECT 
-      us.*, wr.name as role
+      us.*, wr.roleId as roleId
     FROM workspace_role wr
     INNER JOIN workspace_access wa ON wr.roleId = wa.roleId
     INNER JOIN user us ON wa.userId = us.userId

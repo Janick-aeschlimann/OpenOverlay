@@ -1,4 +1,6 @@
+import { constants } from "buffer";
 import db from "./db.js";
+import { getRoleData } from "./roleController.js";
 import { getUserData } from "./userController.js";
 import { getWorkspaceData, hasWorkspaceAccess } from "./workspaceController.js";
 import crypto from "crypto";
@@ -15,7 +17,21 @@ export const getWorkspaceInvites = async (req, res) => {
     workspaceId,
   ]);
 
-  res.send(result);
+  const response = await Promise.all(
+    result.map(async (invite) => ({
+      workspaceInviteId: invite.workspaceInviteId,
+      token: invite.token,
+      created_by: {
+        username: (await getUserData(invite.created_by)).username,
+      },
+      expires_at: invite.expires_at,
+      usages: invite.usages,
+      max_usages: invite.max_usages,
+      role: (await getRoleData(invite.roleId)).name,
+    }))
+  );
+
+  res.send(response);
 };
 
 export const createWorkspaceInvite = async (req, res) => {
@@ -45,33 +61,40 @@ export const createWorkspaceInvite = async (req, res) => {
 
   const [result] = await db.query(
     "INSERT INTO workspace_invite (workspaceId, token, created_by, expires_at, usages, max_usages, roleId) VALUES (?, ?, ?, ?, ?, ?, ?)",
-    [workspaceId, token, userId, expires_at, 0, max_usages, roleId]
+    [
+      workspaceId,
+      token,
+      userId,
+      expires_at ? new Date(expires_at).toISOString().slice(0, 19).replace("T", " ") : null,
+      0,
+      max_usages,
+      roleId,
+    ]
   );
 
-  res.status(201).json({ message: "invite created" });
+  res.status(201).json({ message: "invite created", token: token });
 };
 
 export const deleteWorkspaceInvite = async (req, res) => {
-  const { inviteId } = req.params;
+  const { workspaceId, inviteId } = req.params;
   const userId = req.session.getUserId();
 
-  const [invite] = await db.query("SELECT * FROM workspace_invite WHERE workspaceInviteId = ?", [
-    inviteId,
-  ]);
+  if (!(await hasWorkspaceAccess(userId, workspaceId))) {
+    return res.status(403).json({ message: "You dont have access to this workspace" });
+  }
+
+  const [invite] = await db.query(
+    "SELECT * FROM workspace_invite WHERE workspaceInviteId = ? AND workspaceId = ?",
+    [inviteId, workspaceId]
+  );
 
   if (!invite[0]) {
     return res.status(404).json({ message: "Invite not found" });
   }
 
-  const workspaceId = invite[0].workspaceId;
-  if (!(await hasWorkspaceAccess(userId, workspaceId))) {
-    return res.status(403).json({ message: "You dont have access to this workspace" });
-  }
-
-  const [success] = await db.query(
-    "DELETE FROM workspace_invite WHERE workspaceInviteId = ?",
-    inviteId
-  );
+  const [success] = await db.query("DELETE FROM workspace_invite WHERE workspaceInviteId = ?", [
+    inviteId,
+  ]);
 
   if (success.affectedRows == 1) {
     res.json({ message: "invite deleted" });
@@ -108,10 +131,16 @@ export const acceptWorkspaceInvite = async (req, res) => {
   ]);
 
   if (access.affectedRows == 1) {
-    const [update] = await db.query("UPDATE workspace_invite SET usages = ?", [
-      invite[0].usages + 1,
+    const [update] = await db.query(
+      "UPDATE workspace_invite SET usages = ? WHERE workspaceInviteId = ?",
+      [invite[0].usages + 1, invite[0].workspaceInviteId]
+    );
+
+    const [workspace] = await db.query("SELECT * FROM workspace WHERE workspaceId = ?", [
+      invite[0].workspaceId,
     ]);
-    res.json({ message: "Joined workspace" });
+
+    res.json({ message: "Joined workspace", slug: workspace[0].slug });
   } else {
     res.status(500).json({ message: "Could not join Workspace" });
   }

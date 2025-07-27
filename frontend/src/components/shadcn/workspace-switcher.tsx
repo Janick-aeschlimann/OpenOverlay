@@ -17,19 +17,17 @@ import {
 } from "@/components/shadcn/ui/sidebar";
 import { useWorkspaceStore } from "@/store/workspace";
 import { useNavigate } from "react-router-dom";
-import { useEffect } from "react";
+import type { Workspace } from "@/types/types";
 
 export function WorkspaceSwitcher() {
   const { isMobile } = useSidebar();
   const { activeWorkspace, workspaces, setWorkspace } = useWorkspaceStore();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    console.log(activeWorkspace);
-    if (activeWorkspace) {
-      navigate(`/workspace/${activeWorkspace?.slug}`);
-    }
-  }, [activeWorkspace]);
+  const changeWorkspace = (workspace: Workspace) => {
+    setWorkspace(workspace);
+    navigate(`/workspace/${workspace.slug}`);
+  };
 
   return (
     <SidebarMenu>
@@ -81,7 +79,7 @@ export function WorkspaceSwitcher() {
             {workspaces.map((workspace, index) => (
               <DropdownMenuItem
                 key={workspace.name}
-                onClick={() => setWorkspace(workspace)}
+                onClick={() => changeWorkspace(workspace)}
                 className="gap-2 p-2"
               >
                 <div className="flex size-6 items-center justify-center rounded-md border">

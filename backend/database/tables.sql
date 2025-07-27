@@ -75,7 +75,7 @@ CREATE TABLE `workspace_invite` (
 	`workspaceId` INTEGER NOT NULL,
 	`token` VARCHAR(255) NOT NULL,
 	`created_by` VARCHAR(255) NOT NULL,
-	`expires_at` DATETIME,
+	`expires_at` TIMESTAMP,
 	`usages` INTEGER NOT NULL,
 	`max_usages` INTEGER,
 	`roleId` INTEGER NOT NULL,

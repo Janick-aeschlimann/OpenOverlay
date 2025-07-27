@@ -127,6 +127,41 @@ export const PatchAPI = async (
   }
 };
 
+export const DeleteAPI = async (
+  endpoint: string,
+  authenticated: boolean = true
+) => {
+  const accessToken = await Session.getAccessToken();
+  const response = await fetch(APIUrl + endpoint, {
+    method: "DELETE",
+    headers: authenticated ? { Authorization: `Bearer ${accessToken}` } : {},
+  });
+
+  if (!response.ok) {
+    try {
+      const { message } = await response.json();
+      if (message) {
+        return { success: false, status: response.status, error: message };
+      } else {
+        throw new Error();
+      }
+    } catch {
+      return {
+        success: false,
+        status: response.status,
+        error: "Invalid JSON in response",
+      };
+    }
+  }
+
+  try {
+    const data = await response.json();
+    return { success: true, data: data };
+  } catch {
+    return { success: false, error: "Invalid JSON in response" };
+  }
+};
+
 export const PostFormAPI = async (
   endpoint: string,
   formData: FormData,

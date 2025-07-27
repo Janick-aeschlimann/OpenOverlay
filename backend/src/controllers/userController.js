@@ -79,3 +79,13 @@ export const getOwnUser = async (req, res) => {
     res.status(404).json({ message: "User not found" });
   }
 };
+
+export const getUser = async (req, res) => {
+  let { userId } = req.params;
+  const user = await getUserData(userId);
+  if (user) {
+    res.json(user);
+  } else {
+    res.status(404).json({ message: "User not found" });
+  }
+};

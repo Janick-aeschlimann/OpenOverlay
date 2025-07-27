@@ -7,6 +7,16 @@ const templates = {
   viewer: ["viewer.all"],
 };
 
+export const getRoleData = async (roleId) => {
+  const [result] = await db.query("SELECT * FROM workspace_role WHERE roleId = ?", [roleId]);
+
+  if (result[0]) {
+    return result[0];
+  } else {
+    return null;
+  }
+};
+
 export const getWorkspaceRoles = async (req, res) => {
   const { workspaceId } = req.params;
   const userId = req.session.getUserId();
