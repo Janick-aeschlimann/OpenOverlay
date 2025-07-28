@@ -153,6 +153,8 @@ export class CanvasSync {
         width: y.get("width"),
         height: y.get("height"),
         rotation: y.get("rotation"),
+        type: y.get("type"),
+        props: y.get("props"),
       };
     }
     return {} as CanvasObject;
@@ -167,6 +169,8 @@ export class CanvasSync {
     yCanvasObject.set("width", object.width);
     yCanvasObject.set("height", object.height);
     yCanvasObject.set("rotation", object.rotation);
+    yCanvasObject.set("type", object.type);
+    yCanvasObject.set("props", object.props);
 
     return yCanvasObject;
   };

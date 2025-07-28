@@ -30,6 +30,8 @@ export interface CanvasObject {
   width: number;
   height: number;
   rotation: number;
+  type: string;
+  props?: any;
 }
 
 export interface CanvasDraft {
@@ -37,7 +39,7 @@ export interface CanvasDraft {
   y: number;
   width: number;
   height: number;
-  type: "rectangle" | "ellipsis" | "line";
+  type: string;
 }
 
 export interface CanvasTransform {

@@ -70,10 +70,11 @@ export interface CanvasStore {
   setCanvas: (canvas: Canvas) => void;
   updateCanvas: (canvas: Canvas) => void;
   setCanvasObjects: (objects: CanvasObject[]) => void;
-  updateCanvasObject: (newObject: CanvasObject) => void;
-  addCanvasObject: (newObject?: CanvasObject) => void;
+  updateCanvasObject: (id: string, newObject: Partial<CanvasObject>) => void;
+  updateCanvasObjectProps: (id: string, props: any) => void;
+  addCanvasObject: (newObject: CanvasObject) => void;
   deleteCanvasObject: (canvasObjectId: string) => void;
-  setSelectedCanvasObjectId: (canvasObjectId: string) => void;
+  setSelectedCanvasObjectId: (canvasObjectId: string | null) => void;
   setCanvasTransform: (transform: CanvasTransform) => void;
   setTool: (index: number) => void;
   setCanvasDraft: (canvasDraft: CanvasDraft | null) => void;
@@ -152,36 +153,48 @@ export const createCanvasStore = (overlayId: number) =>
           }
         },
         setCanvasObjects: (objects) => set({ canvasObjects: objects }),
-        updateCanvasObject: (newObject) => {
-          const id = newObject.id;
+        updateCanvasObject: (id, newObject) => {
           const connection = get().connection;
-          if (connection.connected && connection.canvasSync) {
+          const oldObject = get().canvasObjects.find(
+            (object) => object.id == id
+          );
+          if (connection.connected && connection.canvasSync && oldObject) {
             set((state) => ({
               canvasObjects: state.canvasObjects.map((object) =>
-                object.id === id ? newObject : object
+                object.id == id ? { ...oldObject, ...newObject } : object
               ),
             }));
-            connection.canvasSync.syncUpdateToYjs(newObject);
+            connection.canvasSync.syncUpdateToYjs({
+              ...oldObject,
+              ...newObject,
+            });
+          }
+        },
+        updateCanvasObjectProps: (id, props) => {
+          const connection = get().connection;
+          const oldObject = get().canvasObjects.find(
+            (object) => object.id == id
+          );
+          if (connection.connected && connection.canvasSync && oldObject) {
+            set((state) => ({
+              canvasObjects: state.canvasObjects.map((object) =>
+                object.id == id
+                  ? { ...oldObject, props: { ...oldObject.props, ...props } }
+                  : object
+              ),
+            }));
+            connection.canvasSync.syncUpdateToYjs({
+              ...oldObject,
+              props: { ...oldObject.props, ...props },
+            });
           }
         },
         addCanvasObject: (newObject) => {
           const connection = get().connection;
           if (connection.connected && connection.canvasSync) {
-            let object: CanvasObject;
             const id = crypto.randomUUID();
+            const object = { ...newObject, id: id };
 
-            if (newObject) {
-              object = { ...newObject, id: id };
-            } else {
-              object = {
-                id: id,
-                x: 0,
-                y: 0,
-                width: 100,
-                height: 100,
-                rotation: 0,
-              };
-            }
             set((state) => ({
               canvasObjects: [...state.canvasObjects, object],
             }));
@@ -266,6 +279,7 @@ export const useCanvasStore = (overlayId: number) => {
     updateCanvas: useStore(store, (s) => s.updateCanvas),
     setCanvasObjects: useStore(store, (s) => s.setCanvasObjects),
     updateCanvasObject: useStore(store, (s) => s.updateCanvasObject),
+    updateCanvasObjectProps: useStore(store, (s) => s.updateCanvasObjectProps),
     addCanvasObject: useStore(store, (s) => s.addCanvasObject),
     deleteCanvasObject: useStore(store, (s) => s.deleteCanvasObject),
     setSelectedCanvasObjectId: useStore(

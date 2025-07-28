@@ -1,4 +1,5 @@
 import type { CanvasDraft, CanvasTransform } from "@/types/types";
+import { componentRegistry } from "./Components/ComponentRegistry";
 
 export interface ICanvasDraftComponentProps {
   canvasDraft: CanvasDraft | null;
@@ -9,7 +10,7 @@ const CanvasDraftComponent: React.FC<ICanvasDraftComponentProps> = (props) => {
   return (
     <>
       <div
-        className="absolute z-20 bg-neutral-600 w-full h-full rounded-md"
+        className="absolute z-20 w-full h-full rounded-md"
         style={{
           left:
             (props.canvasDraft?.x || 0) * props.canvasTransform.scale +
@@ -21,7 +22,30 @@ const CanvasDraftComponent: React.FC<ICanvasDraftComponentProps> = (props) => {
           height:
             (props.canvasDraft?.height || 0) * props.canvasTransform.scale,
         }}
-      ></div>
+      >
+        <div className="w-full h-full">
+          {props.canvasDraft &&
+            (() => {
+              const Render = componentRegistry[props.canvasDraft?.type].render;
+              const defaultProps =
+                componentRegistry[props.canvasDraft?.type].defaultProps;
+              return (
+                <>
+                  {Render && (
+                    <Render
+                      {...{
+                        ...props.canvasDraft,
+                        props: defaultProps,
+                        id: "",
+                        rotation: 0,
+                      }}
+                    />
+                  )}
+                </>
+              );
+            })()}
+        </div>
+      </div>
     </>
   );
 };

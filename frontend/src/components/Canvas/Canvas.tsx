@@ -6,6 +6,7 @@ import type { CanvasDraft, CanvasObject } from "@/types/types";
 import CanvasClient from "@/components/Canvas/CanvasClient";
 import { cn } from "@/lib/utils";
 import CanvasDraftComponent from "./CanvasDraft";
+import { componentRegistry } from "./Components/ComponentRegistry";
 
 export interface ICanvasProps {
   className?: string;
@@ -30,6 +31,7 @@ const Canvas: React.FC<ICanvasProps> = (props) => {
     setTool,
     setCanvasDraft,
     setPresence,
+    setSelectedCanvasObjectId,
   } = useCanvasStore(overlayId);
 
   const canvasStore = getCanvasStore(overlayId);
@@ -101,6 +103,9 @@ const Canvas: React.FC<ICanvasProps> = (props) => {
 
   const handleMouseDown = (event: React.MouseEvent) => {
     const canvas = document.getElementById("canvas");
+    if (event.button == 0) {
+      setSelectedCanvasObjectId(null);
+    }
     if (event.button == 1 && canvas) {
       lastPos.current = { x: event.clientX, y: event.clientY };
       canvas.addEventListener("pointermove", handleMouseMove);
@@ -188,12 +193,23 @@ const Canvas: React.FC<ICanvasProps> = (props) => {
     if (event.button == 0 && canvas) {
       const state = canvasStore.getState();
 
+      let type = "rectangle";
+
+      switch (state.presence.cursor.toolIndex) {
+        case 1:
+          type = "rectangle";
+          break;
+        case 2:
+          type = "ellipse";
+          break;
+      }
+
       const newCanvasDraft: CanvasDraft = {
         x: state.presence.cursor.x,
         y: state.presence.cursor.y,
         width: 0,
         height: 0,
-        type: "rectangle",
+        type: type,
       };
 
       setCanvasDraft(newCanvasDraft);
@@ -236,6 +252,8 @@ const Canvas: React.FC<ICanvasProps> = (props) => {
           width: canvasDraft.width,
           height: canvasDraft.height,
           rotation: 0,
+          type: canvasDraft.type,
+          props: componentRegistry[canvasDraft.type]?.defaultProps,
         };
         addCanvasObject(newCanvasObject);
       }
@@ -287,7 +305,7 @@ const Canvas: React.FC<ICanvasProps> = (props) => {
             object={object}
             canvasTransform={canvasTransform}
             setCanvasObject={(object: CanvasObject) => {
-              updateCanvasObject(object);
+              updateCanvasObject(object.id, object);
             }}
             overlayId={overlayId}
           ></CanvasObjectComponent>

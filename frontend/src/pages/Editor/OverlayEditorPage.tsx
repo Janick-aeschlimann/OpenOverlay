@@ -1,9 +1,11 @@
 import Canvas from "@/components/Canvas/Canvas";
+import CreateCanvasObjectModal from "@/components/Canvas/CreateCanvasObjectModal";
+import Properties from "@/components/Canvas/Properties";
 import Toolbar from "@/components/Canvas/Toolbar";
 import { Input } from "@/components/shadcn/ui/input";
 import { useCanvasStore } from "@/store/canvas";
-import { ArrowLeft, Redo2, Undo2 } from "lucide-react";
-import type { ChangeEvent } from "react";
+import { ArrowLeft, Plus, Redo2, Undo2 } from "lucide-react";
+import { useState, type ChangeEvent } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 const OverlayEditor: React.FC = () => {
@@ -12,6 +14,8 @@ const OverlayEditor: React.FC = () => {
   const overlayId = parseInt(useParams().id!);
 
   const { canvas, connection, updateCanvas } = useCanvasStore(overlayId);
+
+  const [modalOpen, setModalOpen] = useState(false);
 
   return (
     <>
@@ -57,6 +61,15 @@ const OverlayEditor: React.FC = () => {
                 }}
               />
             </div>
+            <div className="border-l-2 border-neutral-600 h-8"></div>
+            <div
+              className="cursor-pointer hover:bg-[#3f3f3f] p-2 rounded-xl"
+              onClick={() => {
+                setModalOpen(true);
+              }}
+            >
+              <Plus className="h-7 w-7 text-white" />
+            </div>
           </div>
           <div className="flex flex-row gap-3">
             <Input
@@ -88,8 +101,14 @@ const OverlayEditor: React.FC = () => {
         <div className="absolute h-full w-24 left-0 top-0 flex justify-center items-center">
           <Toolbar overlayId={overlayId} />
         </div>
+        <Properties overlayId={overlayId} />
         <Canvas className="w-screen flex-1 relative select-none" />
       </div>
+      <CreateCanvasObjectModal
+        overlayId={overlayId}
+        isOpen={modalOpen}
+        setIsOpen={setModalOpen}
+      />
     </>
   );
 };

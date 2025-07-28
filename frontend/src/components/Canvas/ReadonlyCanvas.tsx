@@ -4,6 +4,7 @@ import { useParams } from "react-router-dom";
 import { WebsocketProvider } from "y-websocket";
 import * as Y from "yjs";
 import { create } from "zustand";
+import { componentRegistry } from "./Components/ComponentRegistry";
 
 const useSceneStore = create<{
   currentScene: number;
@@ -36,6 +37,8 @@ const ReadonlyCanvas: React.FC = () => {
         width: y.get("width"),
         height: y.get("height"),
         rotation: y.get("rotation"),
+        type: y.get("type"),
+        props: y.get("props"),
       };
     }
     return {} as CanvasObject;
@@ -116,14 +119,19 @@ const ReadonlyCanvas: React.FC = () => {
         >
           {objects1?.map((object) => (
             <div
-              className="absolute bg-[#262626]"
+              className="absolute"
               style={{
                 left: object.x,
                 top: object.y,
                 width: object.width,
                 height: object.height,
               }}
-            ></div>
+            >
+              {(() => {
+                const Component = componentRegistry[object.type].render;
+                return <>{Component && <Component {...object} />}</>;
+              })()}
+            </div>
           ))}
         </div>
         <div

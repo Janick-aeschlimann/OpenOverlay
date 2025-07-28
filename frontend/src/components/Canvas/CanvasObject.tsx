@@ -1,6 +1,7 @@
 import { useCanvasStore } from "@/store/canvas";
 import type { CanvasObject, CanvasTransform } from "@/types/types";
 import { useRef } from "react";
+import { componentRegistry } from "./Components/ComponentRegistry";
 
 export interface ICanvasObjectProps {
   object: CanvasObject;
@@ -201,6 +202,7 @@ const CanvasObjectComponent: React.FC<ICanvasObjectProps> = (props) => {
     let resizeHandler: (event: MouseEvent) => void;
 
     if (event.button == 0) {
+      setSelectedCanvasObjectId(props.object.id);
       switch ((event.target as HTMLElement).id) {
         case "top":
           resizeHandler = handleResizeTop;
@@ -239,6 +241,8 @@ const CanvasObjectComponent: React.FC<ICanvasObjectProps> = (props) => {
     }
   };
 
+  const Renderer = componentRegistry[props.object.type]?.render;
+
   return (
     <>
       <div
@@ -263,10 +267,12 @@ const CanvasObjectComponent: React.FC<ICanvasObjectProps> = (props) => {
         ></div>
 
         <div
-          className="absolute bg-neutral-600 w-full h-full hover:cursor-move"
+          className="absolute w-full h-full hover:cursor-move"
           onMouseDown={handleMouseDown}
           onMouseUp={handleMouseUp}
-        ></div>
+        >
+          {Renderer && <Renderer {...props.object} />}
+        </div>
 
         <div
           id="top-left"
