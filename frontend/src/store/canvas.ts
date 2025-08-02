@@ -7,7 +7,14 @@ import type {
   Client,
   Connection,
 } from "@/types/types";
-import { Circle, Eraser, MousePointer2, Slash, Square } from "lucide-react";
+import {
+  Circle,
+  Eraser,
+  MousePointer2,
+  Slash,
+  Square,
+  Type,
+} from "lucide-react";
 import { useMemo } from "react";
 import { create, useStore } from "zustand";
 import { persist } from "zustand/middleware";
@@ -54,6 +61,7 @@ export const tools: Tool[] = [
   { name: "Rectangle", icon: Square },
   { name: "Circle", icon: Circle },
   { name: "Line", icon: Slash },
+  { name: "Text", icon: Type },
   { name: "Eraser", icon: Eraser },
 ];
 

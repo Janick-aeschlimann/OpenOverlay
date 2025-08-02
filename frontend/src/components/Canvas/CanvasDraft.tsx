@@ -33,12 +33,13 @@ const CanvasDraftComponent: React.FC<ICanvasDraftComponentProps> = (props) => {
                 <>
                   {Render && (
                     <Render
-                      {...{
+                      obj={{
                         ...props.canvasDraft,
                         props: defaultProps,
                         id: "",
                         rotation: 0,
                       }}
+                      transform={{ scale: props.canvasTransform.scale }}
                     />
                   )}
                 </>

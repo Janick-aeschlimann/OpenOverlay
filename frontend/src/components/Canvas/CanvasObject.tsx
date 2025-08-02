@@ -246,7 +246,7 @@ const CanvasObjectComponent: React.FC<ICanvasObjectProps> = (props) => {
   return (
     <>
       <div
-        className="absolute z-10 rounded-md overflow-hidden"
+        className="absolute z-10 overflow-hidden"
         style={{
           left:
             props.object.x * props.canvasTransform.scale +
@@ -267,11 +267,19 @@ const CanvasObjectComponent: React.FC<ICanvasObjectProps> = (props) => {
         ></div>
 
         <div
-          className="absolute w-full h-full hover:cursor-move"
+          className="absolute w-full h-full hover:cursor-move overflow-hidden"
           onMouseDown={handleMouseDown}
           onMouseUp={handleMouseUp}
+          style={{
+            borderRadius: selectedCanvasObjectId == props.object.id ? 8 : 0,
+          }}
         >
-          {Renderer && <Renderer {...props.object} />}
+          {Renderer && (
+            <Renderer
+              obj={props.object}
+              transform={{ scale: props.canvasTransform.scale }}
+            />
+          )}
         </div>
 
         <div

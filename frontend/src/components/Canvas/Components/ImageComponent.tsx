@@ -10,13 +10,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/shadcn/ui/select";
+import { Slider } from "@/components/shadcn/ui/slider";
 
 export const ImageComponent: ComponentDefinition = {
-  render: (obj) => {
+  render: ({ obj, transform }) => {
     return (
       <div
         style={{
-          borderRadius: `${obj.props?.borderRadius}px`,
+          borderRadius: `${obj.props?.borderRadius * transform.scale}px`,
           overflow: "hidden",
           height: "100%",
           width: "100%",
@@ -30,6 +31,7 @@ export const ImageComponent: ComponentDefinition = {
             height: "100%",
             backgroundColor: obj.props?.color,
             objectFit: obj.props?.objectFit,
+            opacity: obj.props?.opacity / 100,
           }}
         />
       </div>
@@ -76,11 +78,23 @@ export const ImageComponent: ComponentDefinition = {
           </SelectContent>
         </Select>
       </div>
+      <div className="flex flex-row justify-between gap-2 items-center">
+        <Label>Opacity</Label>
+        <Slider
+          value={[props?.opacity ?? 100]}
+          onValueChange={(value) => onChange({ opacity: value[0] })}
+          max={100}
+          step={1}
+          {...props}
+        />
+        <p>{props?.opacity ?? 100}%</p>
+      </div>
     </>
   ),
   defaultProps: {
     url: "",
     borderRadius: 8,
     objectFit: "scale-down",
+    opacity: 100,
   },
 };

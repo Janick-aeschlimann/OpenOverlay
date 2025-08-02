@@ -7,7 +7,7 @@ import {
   CommandList,
 } from "@/components/shadcn/ui/command";
 import { useCanvasStore } from "@/store/canvas";
-import { Circle, Image, Square } from "lucide-react";
+import { Circle, Image, Square, SquareCode, Type } from "lucide-react";
 import { componentRegistry } from "./Components/ComponentRegistry";
 import type { CanvasObject } from "@/types/types";
 
@@ -59,6 +59,14 @@ const CreateCanvasObjectModal: React.FC<ICreateCanvasModalProps> = (props) => {
             <CommandItem onSelect={() => createCanvasObject("image")}>
               <Image />
               <span>Image</span>
+            </CommandItem>
+            <CommandItem onSelect={() => createCanvasObject("text")}>
+              <Type />
+              <span>Text</span>
+            </CommandItem>
+            <CommandItem onSelect={() => createCanvasObject("embed")}>
+              <SquareCode />
+              <span>Embed</span>
             </CommandItem>
           </CommandGroup>
         </CommandList>

@@ -202,6 +202,9 @@ const Canvas: React.FC<ICanvasProps> = (props) => {
         case 2:
           type = "ellipse";
           break;
+        case 4:
+          type = "text";
+          break;
       }
 
       const newCanvasDraft: CanvasDraft = {

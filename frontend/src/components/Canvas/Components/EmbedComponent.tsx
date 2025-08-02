@@ -3,32 +3,38 @@ import type { ComponentDefinition } from "./ComponentRegistry";
 import { Label } from "@radix-ui/react-label";
 import { Slider } from "@/components/shadcn/ui/slider";
 
-export const RectangleComponent: ComponentDefinition = {
+export const EmbedComponent: ComponentDefinition = {
   render: ({ obj, transform }) => {
     return (
-      <div
+      <iframe
+        src={obj.props?.src}
         style={{
-          width: "100%",
-          height: "100%",
+          width: obj.width / ((obj.props?.scale ?? 100) / 100),
+          height: obj.height / ((obj.props?.scale ?? 100) / 100),
           backgroundColor: obj.props?.color,
-          borderRadius: `${obj.props?.borderRadius * transform.scale}px`,
+          borderRadius: `${obj.props?.borderRadius}px`,
           opacity: obj.props?.opacity / 100,
+          pointerEvents: "none",
+          scale: transform.scale * ((obj.props?.scale ?? 100) / 100),
+          transformOrigin: "top left",
+          overflow: "hidden",
         }}
+        scrolling="no"
       />
     );
   },
   editor: ({ props, onChange }) => (
     <>
       <div className="flex flex-row justify-between gap-2 items-center">
-        <Label>Color</Label>
+        <Label className="text-nowrap">src</Label>
         <Input
-          type="color"
-          value={props?.color}
-          onChange={(e) => onChange({ color: e.target.value })}
+          type="text"
+          value={props?.src}
+          onChange={(e) => onChange({ src: e.target.value })}
         />
       </div>
       <div className="flex flex-row justify-between gap-2 items-center">
-        <Label className=" text-nowrap">Border Radius</Label>
+        <Label className="text-nowrap">Border Radius</Label>
         <Input
           type="number"
           value={props?.borderRadius}
@@ -48,11 +54,21 @@ export const RectangleComponent: ComponentDefinition = {
         />
         <p>{props?.opacity ?? 100}%</p>
       </div>
+      <div className="flex flex-row justify-between gap-2 items-center">
+        <Label className="text-nowrap">Scale</Label>
+        <Input
+          type="number"
+          value={props?.scale ?? 100}
+          onChange={(e) => onChange({ scale: parseInt(e.target.value) || 0 })}
+        />
+        <p>%</p>
+      </div>
     </>
   ),
   defaultProps: {
-    color: "#525252",
+    src: "",
     borderRadius: 8,
     opacity: 100,
+    scale: 100,
   },
 };

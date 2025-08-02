@@ -3,7 +3,7 @@ import type { ComponentDefinition } from "./ComponentRegistry";
 import { Label } from "@radix-ui/react-label";
 
 export const EllipseComponent: ComponentDefinition = {
-  render: (obj) => (
+  render: ({ obj }) => (
     <div
       style={{
         width: "100%",

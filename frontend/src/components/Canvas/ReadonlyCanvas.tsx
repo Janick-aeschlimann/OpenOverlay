@@ -128,8 +128,14 @@ const ReadonlyCanvas: React.FC = () => {
               }}
             >
               {(() => {
-                const Component = componentRegistry[object.type].render;
-                return <>{Component && <Component {...object} />}</>;
+                const Component = componentRegistry[object.type]?.render;
+                return (
+                  <>
+                    {Component && (
+                      <Component obj={object} transform={{ scale: 1 }} />
+                    )}
+                  </>
+                );
               })()}
             </div>
           ))}
