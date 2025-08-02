@@ -149,14 +149,25 @@ const ReadonlyCanvas: React.FC = () => {
         >
           {objects2?.map((object) => (
             <div
-              className="absolute bg-[#262626]"
+              className="absolute"
               style={{
                 left: object.x,
                 top: object.y,
                 width: object.width,
                 height: object.height,
               }}
-            ></div>
+            >
+              {(() => {
+                const Component = componentRegistry[object.type]?.render;
+                return (
+                  <>
+                    {Component && (
+                      <Component obj={object} transform={{ scale: 1 }} />
+                    )}
+                  </>
+                );
+              })()}
+            </div>
           ))}
         </div>
       </div>
