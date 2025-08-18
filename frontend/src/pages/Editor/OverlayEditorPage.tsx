@@ -1,10 +1,11 @@
 import Canvas from "@/components/Canvas/Canvas";
 import CreateCanvasObjectModal from "@/components/Canvas/CreateCanvasObjectModal";
+import Hierarchy from "@/components/Canvas/Hierarchy";
 import Properties from "@/components/Canvas/Properties";
 import Toolbar from "@/components/Canvas/Toolbar";
 import { Input } from "@/components/shadcn/ui/input";
 import { useCanvasStore } from "@/store/canvas";
-import { ArrowLeft, Plus, Redo2, Undo2 } from "lucide-react";
+import { ArrowLeft, Network, Plus, Redo2, Undo2 } from "lucide-react";
 import { useState, type ChangeEvent } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
@@ -16,6 +17,8 @@ const OverlayEditor: React.FC = () => {
   const { canvas, connection, updateCanvas } = useCanvasStore(overlayId);
 
   const [modalOpen, setModalOpen] = useState(false);
+
+  const [hierarchyOpen, setHierarchyOpen] = useState<boolean>(false);
 
   return (
     <>
@@ -70,6 +73,14 @@ const OverlayEditor: React.FC = () => {
             >
               <Plus className="h-7 w-7 text-white" />
             </div>
+            <div
+              className="cursor-pointer hover:bg-[#3f3f3f] p-3 rounded-xl"
+              onClick={() => {
+                setHierarchyOpen((state) => !state);
+              }}
+            >
+              <Network className="h-5 w-5 text-white" />
+            </div>
           </div>
           <div className="flex flex-row gap-3">
             <Input
@@ -98,11 +109,16 @@ const OverlayEditor: React.FC = () => {
             ></Input>
           </div>
         </div>
-        <div className="absolute h-full w-24 left-0 top-0 flex justify-center items-center">
-          <Toolbar overlayId={overlayId} />
+        <div className="flex flex-row h-full">
+          <Hierarchy open={hierarchyOpen} />
+          <div className="w-full relative">
+            <div className="absolute h-full w-24 left-0 top-0 flex justify-center items-center">
+              <Toolbar overlayId={overlayId} />
+            </div>
+            <Properties overlayId={overlayId} />
+            <Canvas className="w-full flex-1 relative select-none" />
+          </div>
         </div>
-        <Properties overlayId={overlayId} />
-        <Canvas className="w-screen flex-1 relative select-none" />
       </div>
       <CreateCanvasObjectModal
         overlayId={overlayId}

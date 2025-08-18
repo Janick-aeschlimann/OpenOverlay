@@ -32,7 +32,7 @@ const Properties: React.FC<IPropertiesProps> = (props) => {
     <>
       <div
         className={cn(
-          "absolute w-100 h-full flex flex-row pt-30 pb-10 transition-all duration-500",
+          "absolute w-100 h-full flex flex-row py-10 transition-all duration-500",
           selectedCanvasObjectId ? "right-10 ease-out" : "-right-full ease-in"
         )}
       >
