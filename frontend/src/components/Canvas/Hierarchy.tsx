@@ -10,19 +10,23 @@ const data: TreeDataItem[] = [
   {
     id: "1",
     name: "Item 1",
+    draggable: true,
     children: [
       {
         id: "2",
         name: "Item 1.1",
+        draggable: true,
         children: [
           {
             id: "3",
             name: "Item 1.1.1",
+            draggable: true,
           },
           {
             id: "4",
             name: "Item 1.1.2",
             droppable: true,
+            draggable: true,
           },
         ],
       },
@@ -37,7 +41,6 @@ const data: TreeDataItem[] = [
     id: "6",
     name: "Item 2 (draggable)",
     draggable: true,
-    droppable: true,
   },
 ];
 
