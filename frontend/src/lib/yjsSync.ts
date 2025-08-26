@@ -3,7 +3,7 @@ import {
   getCanvasStore,
   type Presence,
 } from "@/store/canvas";
-import type { Canvas, CanvasObject } from "@/types/types";
+import type { Canvas, CanvasObject, HierarchyItem } from "@/types/types";
 import { WebsocketProvider } from "y-websocket";
 import Session from "supertokens-web-js/recipe/session";
 import * as Y from "yjs";
@@ -14,6 +14,7 @@ export class CanvasSync {
   public ydoc: Y.Doc;
   public yarray: Y.Array<Y.Map<any>>;
   public ycanvas: Y.Map<any>;
+  public yhierarchy: Y.Array<Y.Map<any>>;
   public undoManager: Y.UndoManager;
   public canvasStore: ReturnType<typeof createCanvasStore>;
 
@@ -26,6 +27,7 @@ export class CanvasSync {
     this.ydoc = ydoc;
     this.yarray = ydoc.getArray<Y.Map<any>>("objects");
     this.ycanvas = ydoc.getMap<Y.Map<any>>("canvas");
+    this.yhierarchy = ydoc.getArray<Y.Map<any>>("Hierarchy");
     this.undoManager = new Y.UndoManager(this.yarray, { captureTimeout: 1000 });
     this.canvasStore = canvasStore;
 
@@ -58,6 +60,13 @@ export class CanvasSync {
     this.ycanvas.observeDeep(() => {
       const state = this.canvasStore.getState();
       state.setCanvas(this.ycanvas.toJSON() as Canvas);
+    });
+
+    this.yhierarchy.observeDeep(() => {
+      const state = this.canvasStore.getState();
+      state.setHierarchy(
+        this.yhierarchy.toArray().map((ymap) => this.mapHierarchyNode(ymap))
+      );
     });
 
     const awareness = this.provider.awareness;
@@ -108,13 +117,25 @@ export class CanvasSync {
     }
     const newYObject = this.mapYCanvasObject(object);
     this.yarray.push([newYObject]);
+    this.yhierarchy.push([
+      this.mapHierarchyNodeToYjs({ id: object.id, name: object.id }),
+    ]);
   };
 
   syncDeleteToYjs = (canvasObjectId: string) => {
     const index = this.yarray
       .toArray()
       .findIndex((yobject) => yobject.get("id") == canvasObjectId);
-    this.yarray.delete(index, 1);
+    if (index !== -1) {
+      this.yarray.delete(index, 1);
+    }
+
+    const hierarchyIndex = this.yhierarchy
+      .toArray()
+      .findIndex((node) => node.get("id") == canvasObjectId);
+    if (hierarchyIndex !== -1) {
+      this.yhierarchy.delete(hierarchyIndex, 1);
+    }
   };
 
   syncCursorToYjs = (presence: Presence) => {
@@ -144,6 +165,16 @@ export class CanvasSync {
     this.ycanvas.set("color", canvas.color);
   };
 
+  syncHierarchyToYjs = (hierarchy: HierarchyItem) => {
+    const hierarchyItems = hierarchy.children?.map((node) =>
+      this.mapHierarchyNodeToYjs(node)
+    );
+    if (hierarchyItems) {
+      this.yhierarchy.delete(0, this.yhierarchy.length);
+      this.yhierarchy.insert(0, hierarchyItems);
+    }
+  };
+
   private mapCanvasObject = (y: Y.Map<any>): CanvasObject => {
     if (y) {
       return {
@@ -158,6 +189,34 @@ export class CanvasSync {
       };
     }
     return {} as CanvasObject;
+  };
+
+  private mapHierarchyNode = (y: Y.Map<any>): HierarchyItem => {
+    if (y) {
+      const id = y.get("id");
+      const children = y.get("children") as Y.Array<Y.Map<any>>;
+      return {
+        id: id,
+        name: id,
+        children: children
+          .toArray()
+          .map((child) => this.mapHierarchyNode(child)),
+      };
+    }
+    return {} as HierarchyItem;
+  };
+
+  private mapHierarchyNodeToYjs = (node: HierarchyItem): Y.Map<any> => {
+    const children =
+      node.children?.map((child) => this.mapHierarchyNodeToYjs(child)) ?? [];
+    const ychildren = new Y.Array<any>();
+    ychildren.insert(0, children);
+
+    const yNode = new Y.Map<any>();
+    yNode.set("id", node.id);
+    yNode.set("name", node.name);
+    yNode.set("children", ychildren);
+    return yNode;
   };
 
   private mapYCanvasObject = (object: CanvasObject): Y.Map<any> => {

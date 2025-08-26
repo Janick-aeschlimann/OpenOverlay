@@ -6,6 +6,7 @@ import type {
   CanvasTransform,
   Client,
   Connection,
+  HierarchyItem,
 } from "@/types/types";
 import {
   Circle,
@@ -69,6 +70,7 @@ export interface CanvasStore {
   connection: Connection;
   canvas: Canvas;
   canvasObjects: CanvasObject[];
+  hierarchy: HierarchyItem;
   selectedCanvasObjectId: string | null;
   canvasTransform: CanvasTransform;
   presence: Presence;
@@ -89,6 +91,12 @@ export interface CanvasStore {
   setPresence: (presence: Presence) => void;
   setClients: (clients: Client[]) => void;
   updateClient: (client: Client) => void;
+  setHierarchy: (hierarchy: HierarchyItem[]) => void;
+  moveHierarchyItem: (
+    sourceId: string,
+    targetParentId: string,
+    targetIndex: number
+  ) => void;
 }
 
 export const createCanvasStore = (overlayId: number) =>
@@ -102,6 +110,7 @@ export const createCanvasStore = (overlayId: number) =>
           color: "#121212",
         },
         canvasObjects: [],
+        hierarchy: { id: "root", name: "root", children: [] },
         selectedCanvasObjectId: null,
         canvasTransform: {
           offsetX: 0,
@@ -202,10 +211,16 @@ export const createCanvasStore = (overlayId: number) =>
           if (connection.connected && connection.canvasSync) {
             const id = crypto.randomUUID();
             const object = { ...newObject, id: id };
+            const hierarchyItem: HierarchyItem = { id: id, name: id };
 
             set((state) => ({
               canvasObjects: [...state.canvasObjects, object],
+              hierarchy: {
+                ...state.hierarchy,
+                children: [...(state.hierarchy.children ?? []), hierarchyItem],
+              },
             }));
+
             connection.canvasSync.syncNewToYjs(object);
           }
         },
@@ -218,6 +233,7 @@ export const createCanvasStore = (overlayId: number) =>
               ),
             }));
             connection.canvasSync.syncDeleteToYjs(canvasObjectId);
+            get().setSelectedCanvasObjectId(null);
           }
         },
         setSelectedCanvasObjectId: (canvasObjectId) =>
@@ -260,6 +276,26 @@ export const createCanvasStore = (overlayId: number) =>
             set({ clients: [...clients, client] });
           }
         },
+        setHierarchy: (hierarchy) => {
+          set((state) => ({
+            hierarchy: { ...state.hierarchy, children: hierarchy },
+          }));
+        },
+        moveHierarchyItem: (
+          sourceId: string,
+          targetParentId: string,
+          targetIndex: number
+        ) => {
+          const newHierarchy = moveNode(
+            get().hierarchy,
+            sourceId,
+            targetParentId,
+            targetIndex
+          );
+
+          set({ hierarchy: newHierarchy });
+          get().connection.canvasSync?.syncHierarchyToYjs(newHierarchy);
+        },
       }),
       {
         name: `overlay-${overlayId}`,
@@ -271,12 +307,64 @@ export const createCanvasStore = (overlayId: number) =>
     )
   );
 
+const findNodeAndParent = (
+  root: HierarchyItem,
+  id: string,
+  parent: HierarchyItem | null = null
+): { node: HierarchyItem | null; parent: HierarchyItem | null } => {
+  if (root.id === id) {
+    return { node: root, parent };
+  }
+
+  if (root.children) {
+    for (const child of root.children) {
+      const result = findNodeAndParent(child, id, root);
+      if (result?.node) return result;
+    }
+  }
+
+  return { node: null, parent: null };
+};
+
+const moveNode = (
+  root: HierarchyItem,
+  sourceId: string,
+  targetParentId: string,
+  targetIndex: number
+): HierarchyItem => {
+  const { node, parent } = findNodeAndParent(root, sourceId);
+  if (!node || !parent) {
+    throw new Error("source not found");
+  }
+
+  const { node: newParent } = findNodeAndParent(root, targetParentId);
+  if (!newParent) {
+    throw new Error("target not found");
+  }
+
+  parent.children = parent.children!.filter((c) => c.id !== node.id);
+  newParent.children = insertAt(newParent.children ?? [], targetIndex, node);
+
+  return root;
+};
+
+function insertAt<T>(arr: T[], index: number, item: T) {
+  const copy = [...arr];
+  if (index == -1) {
+    copy.push(item);
+  } else {
+    copy.splice(index, 0, item);
+  }
+  return copy;
+}
+
 export const useCanvasStore = (overlayId: number) => {
   const store = useMemo(() => getCanvasStore(overlayId), [overlayId]);
   return {
     connection: useStore(store, (s) => s.connection),
     canvas: useStore(store, (s) => s.canvas),
     canvasObjects: useStore(store, (s) => s.canvasObjects),
+    hierarchy: useStore(store, (s) => s.hierarchy),
     selectedCanvasObjectId: useStore(store, (s) => s.selectedCanvasObjectId),
     canvasTransform: useStore(store, (s) => s.canvasTransform),
     presence: useStore(store, (s) => s.presence),
@@ -300,6 +388,8 @@ export const useCanvasStore = (overlayId: number) => {
     setPresence: useStore(store, (s) => s.setPresence),
     setClients: useStore(store, (s) => s.setClients),
     updateClient: useStore(store, (s) => s.updateClient),
+    setHierarchy: useStore(store, (s) => s.setHierarchy),
+    moveHierarchyItem: useStore(store, (s) => s.moveHierarchyItem),
   };
 };
 

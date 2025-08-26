@@ -98,3 +98,9 @@ export interface Invite {
   max_usages: number;
   role: string;
 }
+
+export interface HierarchyItem {
+  id: string;
+  name: string;
+  children?: HierarchyItem[];
+}

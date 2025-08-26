@@ -44,7 +44,6 @@ export const RectangleComponent: ComponentDefinition = {
           onValueChange={(value) => onChange({ opacity: value[0] })}
           max={100}
           step={1}
-          {...props}
         />
         <p>{props?.opacity ?? 100}%</p>
       </div>

@@ -1,50 +1,21 @@
 import { cn } from "@/lib/utils";
 import { Separator } from "../shadcn/ui/separator";
-import { TreeView, type TreeDataItem } from "@/components/shadcn/tree-view";
+import { TreeView } from "@/components/shadcn/tree-view";
+import { useCanvasStore } from "@/store/canvas";
 
 export interface IHierarchysProps {
   open: boolean;
+  overlayId: number;
 }
 
-const data: TreeDataItem[] = [
-  {
-    id: "1",
-    name: "Item 1",
-    draggable: true,
-    children: [
-      {
-        id: "2",
-        name: "Item 1.1",
-        draggable: true,
-        children: [
-          {
-            id: "3",
-            name: "Item 1.1.1",
-            draggable: true,
-          },
-          {
-            id: "4",
-            name: "Item 1.1.2",
-            droppable: true,
-            draggable: true,
-          },
-        ],
-      },
-      {
-        id: "5",
-        name: "Item 1.2 (disabled)",
-        disabled: true,
-      },
-    ],
-  },
-  {
-    id: "6",
-    name: "Item 2 (draggable)",
-    draggable: true,
-  },
-];
-
 const Hierarchy: React.FC<IHierarchysProps> = (props) => {
+  const {
+    hierarchy,
+    moveHierarchyItem,
+    setSelectedCanvasObjectId,
+    selectedCanvasObjectId,
+  } = useCanvasStore(props.overlayId);
+
   return (
     <>
       <div
@@ -58,9 +29,15 @@ const Hierarchy: React.FC<IHierarchysProps> = (props) => {
           <Separator className="border-1" />
           <TreeView
             className="w-full"
-            data={data}
-            onDocumentDrag={(source, target) => {
-              console.log(source, target);
+            parent={{ id: "root", name: "root" }}
+            data={hierarchy}
+            onSelectChange={(item) =>
+              setSelectedCanvasObjectId(item?.id ?? null)
+            }
+            selectedObjectId={selectedCanvasObjectId}
+            onDocumentDrag={(source, target, index) => {
+              console.log(`${source.id} -> ${target.id} [${index}]`);
+              moveHierarchyItem(source.id, target.id, index);
             }}
           />
         </div>

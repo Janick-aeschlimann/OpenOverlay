@@ -18,7 +18,7 @@ const OverlayEditor: React.FC = () => {
 
   const [modalOpen, setModalOpen] = useState(false);
 
-  const [hierarchyOpen, setHierarchyOpen] = useState<boolean>(false);
+  const [hierarchyOpen, setHierarchyOpen] = useState<boolean>(true);
 
   return (
     <>
@@ -110,7 +110,7 @@ const OverlayEditor: React.FC = () => {
           </div>
         </div>
         <div className="flex flex-row h-full">
-          <Hierarchy open={hierarchyOpen} />
+          <Hierarchy open={hierarchyOpen} overlayId={overlayId} />
           <div className="w-full relative">
             <div className="absolute h-full w-24 left-0 top-0 flex justify-center items-center">
               <Toolbar overlayId={overlayId} />

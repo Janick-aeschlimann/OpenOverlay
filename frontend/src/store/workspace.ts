@@ -36,7 +36,6 @@ export const useWorkspaceStore = create<{
       workspace = get().workspaces[0];
     }
 
-    console.log(get());
     set({ activeWorkspace: workspace });
   },
 }));
@@ -47,7 +46,6 @@ const setLastWorkspace = (workspaceId: number) => {
 
 const fetchWorkspaces = async () => {
   const workspaces = (await GetAPI("/workspace")).data;
-  console.log(workspaces);
   return workspaces;
 };
 
