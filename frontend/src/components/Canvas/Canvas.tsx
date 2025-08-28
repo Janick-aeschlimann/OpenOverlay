@@ -32,6 +32,7 @@ const Canvas: React.FC<ICanvasProps> = (props) => {
     setCanvasDraft,
     setPresence,
     setSelectedCanvasObjectId,
+    moveSelection,
   } = useCanvasStore(overlayId);
 
   const canvasStore = getCanvasStore(overlayId);
@@ -252,6 +253,7 @@ const Canvas: React.FC<ICanvasProps> = (props) => {
           id: "",
           x: canvasDraft.x,
           y: canvasDraft.y,
+          z: 0,
           width: canvasDraft.width,
           height: canvasDraft.height,
           rotation: 0,
@@ -310,6 +312,7 @@ const Canvas: React.FC<ICanvasProps> = (props) => {
             setCanvasObject={(object: CanvasObject) => {
               updateCanvasObject(object.id, object);
             }}
+            moveSelection={(dx, dy) => moveSelection(dx, dy)}
             overlayId={overlayId}
           ></CanvasObjectComponent>
         ))}

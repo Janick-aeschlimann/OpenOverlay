@@ -92,11 +92,13 @@ export interface CanvasStore {
   setClients: (clients: Client[]) => void;
   updateClient: (client: Client) => void;
   setHierarchy: (hierarchy: HierarchyItem[]) => void;
+  updateDepthValues: () => void;
   moveHierarchyItem: (
     sourceId: string,
     targetParentId: string,
     targetIndex: number
   ) => void;
+  moveSelection: (dx: number, dy: number) => void;
 }
 
 export const createCanvasStore = (overlayId: number) =>
@@ -169,7 +171,10 @@ export const createCanvasStore = (overlayId: number) =>
             connection.canvasSync.syncCanvasToYjs(canvas);
           }
         },
-        setCanvasObjects: (objects) => set({ canvasObjects: objects }),
+        setCanvasObjects: (objects) => {
+          set({ canvasObjects: objects });
+          get().updateDepthValues();
+        },
         updateCanvasObject: (id, newObject) => {
           const connection = get().connection;
           const oldObject = get().canvasObjects.find(
@@ -217,7 +222,7 @@ export const createCanvasStore = (overlayId: number) =>
               canvasObjects: [...state.canvasObjects, object],
               hierarchy: {
                 ...state.hierarchy,
-                children: [...(state.hierarchy.children ?? []), hierarchyItem],
+                children: [hierarchyItem, ...(state.hierarchy.children ?? [])],
               },
             }));
 
@@ -280,6 +285,20 @@ export const createCanvasStore = (overlayId: number) =>
           set((state) => ({
             hierarchy: { ...state.hierarchy, children: hierarchy },
           }));
+
+          get().updateDepthValues();
+        },
+        updateDepthValues: () => {
+          const zValues = getZPosition(get().hierarchy.children ?? []);
+
+          set((state) => ({
+            canvasObjects: state.canvasObjects
+              .map((object) => ({
+                ...object,
+                z: zValues.find((node) => node.id == object.id)?.z ?? 0,
+              }))
+              .sort((a, b) => b.z - a.z),
+          }));
         },
         moveHierarchyItem: (
           sourceId: string,
@@ -296,6 +315,39 @@ export const createCanvasStore = (overlayId: number) =>
           set({ hierarchy: newHierarchy });
           get().connection.canvasSync?.syncHierarchyToYjs(newHierarchy);
         },
+        moveSelection: (dx, dy) => {
+          const selectedCanvasObjectId = get().selectedCanvasObjectId;
+          const object = get().canvasObjects.find(
+            (object) => object.id == selectedCanvasObjectId
+          );
+          if (object) {
+            const { node } = findNodeAndParent(get().hierarchy, object.id);
+
+            const canvasTransform = get().canvasTransform;
+            const sdx = dx / canvasTransform.scale;
+            const sdy = dy / canvasTransform.scale;
+
+            get().updateCanvasObject(object.id, {
+              ...object,
+              x: sdx + object.x,
+              y: sdy + object.y,
+            });
+            if (node?.children && node.children.length > 0) {
+              for (const obj of node.children) {
+                const object = get().canvasObjects.find(
+                  (object) => object.id == obj.id
+                );
+                if (object) {
+                  get().updateCanvasObject(object.id, {
+                    ...object,
+                    x: sdx + object.x,
+                    y: sdy + object.y,
+                  });
+                }
+              }
+            }
+          }
+        },
       }),
       {
         name: `overlay-${overlayId}`,
@@ -306,6 +358,22 @@ export const createCanvasStore = (overlayId: number) =>
       }
     )
   );
+
+const getZPosition = (
+  nodes: HierarchyItem[],
+  depth = 0
+): { id: string; z: number }[] => {
+  const result: { id: string; z: number }[] = [];
+  nodes.forEach((node) => {
+    result.push({ id: node.id, z: depth });
+
+    if (node.children && node.children.length > 0) {
+      result.push(...getZPosition(node.children, depth + 1));
+    }
+    depth++;
+  });
+  return result;
+};
 
 const findNodeAndParent = (
   root: HierarchyItem,
@@ -390,6 +458,7 @@ export const useCanvasStore = (overlayId: number) => {
     updateClient: useStore(store, (s) => s.updateClient),
     setHierarchy: useStore(store, (s) => s.setHierarchy),
     moveHierarchyItem: useStore(store, (s) => s.moveHierarchyItem),
+    moveSelection: useStore(store, (s) => s.moveSelection),
   };
 };
 

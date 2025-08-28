@@ -27,6 +27,7 @@ export interface CanvasObject {
   id: string;
   x: number;
   y: number;
+  z: number;
   width: number;
   height: number;
   rotation: number;

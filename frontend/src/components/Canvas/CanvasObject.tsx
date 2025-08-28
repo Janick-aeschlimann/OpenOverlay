@@ -7,6 +7,7 @@ export interface ICanvasObjectProps {
   object: CanvasObject;
   canvasTransform: CanvasTransform;
   setCanvasObject: (object: CanvasObject) => void;
+  moveSelection: (dx: number, dy: number) => void;
   overlayId: number;
 }
 
@@ -21,19 +22,14 @@ const CanvasObjectComponent: React.FC<ICanvasObjectProps> = (props) => {
 
   const handleMouseMove = (event: MouseEvent) => {
     if (lastPos.current) {
-      const dx =
-        (event.clientX - lastPos.current.x) / props.canvasTransform.scale;
-      const dy =
-        (event.clientY - lastPos.current.y) / props.canvasTransform.scale;
+      const dx = event.clientX - lastPos.current.x;
+      const dy = event.clientY - lastPos.current.y;
 
-      const x = props.object.x + dx;
-      const y = props.object.y + dy;
-
-      props.setCanvasObject({
-        ...props.object,
-        x: x,
-        y: y,
-      });
+      props.moveSelection(dx, dy);
+      lastPos.current = {
+        x: lastPos.current.x + dx,
+        y: lastPos.current.y + dy,
+      };
     }
   };
 
