@@ -37,6 +37,7 @@ const CanvasDraftComponent: React.FC<ICanvasDraftComponentProps> = (props) => {
                         ...props.canvasDraft,
                         props: defaultProps,
                         id: "",
+                        z: 0,
                         rotation: 0,
                       }}
                       transform={{ scale: props.canvasTransform.scale }}

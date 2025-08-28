@@ -26,6 +26,7 @@ const CreateCanvasObjectModal: React.FC<ICreateCanvasModalProps> = (props) => {
         id: "",
         x: 0,
         y: 0,
+        z: 0,
         width: 200,
         height: 200,
         rotation: 0,

@@ -34,6 +34,7 @@ const ReadonlyCanvas: React.FC = () => {
         id: y.get("id"),
         x: y.get("x"),
         y: y.get("y"),
+        z: y.get("z"),
         width: y.get("width"),
         height: y.get("height"),
         rotation: y.get("rotation"),
