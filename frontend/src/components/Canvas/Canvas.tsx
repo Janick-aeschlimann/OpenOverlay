@@ -26,7 +26,7 @@ const Canvas: React.FC<ICanvasProps> = (props) => {
     connectYjs,
     updateCanvasObject,
     addCanvasObject,
-    deleteCanvasObject,
+    deleteSelection,
     setCanvasTransform,
     setTool,
     setCanvasDraft,
@@ -45,11 +45,8 @@ const Canvas: React.FC<ICanvasProps> = (props) => {
 
       document.addEventListener("keydown", (event: KeyboardEvent) => {
         if (event.code == "Delete") {
-          const state = canvasStore.getState();
-          if (state.selectedCanvasObjectId) {
-            deleteCanvasObject(state.selectedCanvasObjectId);
-            canvasSync.undoManager.stopCapturing();
-          }
+          deleteSelection();
+          canvasSync.undoManager.stopCapturing();
         }
         if ((event.key == "z" || event.key == "Z") && event.ctrlKey) {
           if (event.shiftKey) {

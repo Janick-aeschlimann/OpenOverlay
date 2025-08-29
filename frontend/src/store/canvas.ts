@@ -83,7 +83,7 @@ export interface CanvasStore {
   updateCanvasObject: (id: string, newObject: Partial<CanvasObject>) => void;
   updateCanvasObjectProps: (id: string, props: any) => void;
   addCanvasObject: (newObject: CanvasObject) => void;
-  deleteCanvasObject: (canvasObjectId: string) => void;
+  deleteSelection: () => void;
   setSelectedCanvasObjectId: (canvasObjectId: string | null) => void;
   setCanvasTransform: (transform: CanvasTransform) => void;
   setTool: (index: number) => void;
@@ -173,7 +173,6 @@ export const createCanvasStore = (overlayId: number) =>
         },
         setCanvasObjects: (objects) => {
           set({ canvasObjects: objects });
-          get().updateDepthValues();
         },
         updateCanvasObject: (id, newObject) => {
           const connection = get().connection;
@@ -229,16 +228,30 @@ export const createCanvasStore = (overlayId: number) =>
             connection.canvasSync.syncNewToYjs(object);
           }
         },
-        deleteCanvasObject: (canvasObjectId) => {
+        deleteSelection: () => {
           const connection = get().connection;
           if (connection.connected && connection.canvasSync) {
-            set((state) => ({
-              canvasObjects: state.canvasObjects.filter(
-                (object) => object.id !== canvasObjectId
-              ),
-            }));
-            connection.canvasSync.syncDeleteToYjs(canvasObjectId);
-            get().setSelectedCanvasObjectId(null);
+            const canvasObjectId = get().selectedCanvasObjectId;
+            if (canvasObjectId) {
+              const { node } = findNodeAndParent(
+                get().hierarchy,
+                canvasObjectId
+              );
+
+              const parentNode = { id: canvasObjectId, name: canvasObjectId };
+
+              const children = node
+                ? [...getAllChildrenNodes(node), parentNode]
+                : [parentNode];
+
+              set((state) => ({
+                canvasObjects: state.canvasObjects.filter(
+                  (object) => !children.find((child) => child.id == object.id)
+                ),
+              }));
+              connection.canvasSync.syncDeleteToYjs(children);
+              get().setSelectedCanvasObjectId(null);
+            }
           }
         },
         setSelectedCanvasObjectId: (canvasObjectId) =>
@@ -317,33 +330,35 @@ export const createCanvasStore = (overlayId: number) =>
         },
         moveSelection: (dx, dy) => {
           const selectedCanvasObjectId = get().selectedCanvasObjectId;
-          const object = get().canvasObjects.find(
-            (object) => object.id == selectedCanvasObjectId
-          );
-          if (object) {
-            const { node } = findNodeAndParent(get().hierarchy, object.id);
+          if (selectedCanvasObjectId) {
+            const { node } = findNodeAndParent(
+              get().hierarchy,
+              selectedCanvasObjectId
+            );
+
+            const selectedNode = {
+              id: selectedCanvasObjectId,
+              name: selectedCanvasObjectId,
+            };
+
+            const children = node
+              ? [...getAllChildrenNodes(node), selectedNode]
+              : [selectedNode];
 
             const canvasTransform = get().canvasTransform;
             const sdx = dx / canvasTransform.scale;
             const sdy = dy / canvasTransform.scale;
 
-            get().updateCanvasObject(object.id, {
-              ...object,
-              x: sdx + object.x,
-              y: sdy + object.y,
-            });
-            if (node?.children && node.children.length > 0) {
-              for (const obj of node.children) {
-                const object = get().canvasObjects.find(
-                  (object) => object.id == obj.id
-                );
-                if (object) {
-                  get().updateCanvasObject(object.id, {
-                    ...object,
-                    x: sdx + object.x,
-                    y: sdy + object.y,
-                  });
-                }
+            for (const obj of children) {
+              const object = get().canvasObjects.find(
+                (object) => object.id == obj.id
+              );
+              if (object) {
+                get().updateCanvasObject(object.id, {
+                  ...object,
+                  x: sdx + object.x,
+                  y: sdy + object.y,
+                });
               }
             }
           }
@@ -373,6 +388,19 @@ const getZPosition = (
     depth++;
   });
   return result;
+};
+
+const getAllChildrenNodes = (node: HierarchyItem): HierarchyItem[] => {
+  const nodes: HierarchyItem[] = [];
+
+  node.children?.forEach((child) => {
+    nodes.push(child);
+    if (child.children) {
+      nodes.push(...getAllChildrenNodes(child));
+    }
+  });
+
+  return nodes;
 };
 
 const findNodeAndParent = (
@@ -445,7 +473,7 @@ export const useCanvasStore = (overlayId: number) => {
     updateCanvasObject: useStore(store, (s) => s.updateCanvasObject),
     updateCanvasObjectProps: useStore(store, (s) => s.updateCanvasObjectProps),
     addCanvasObject: useStore(store, (s) => s.addCanvasObject),
-    deleteCanvasObject: useStore(store, (s) => s.deleteCanvasObject),
+    deleteSelection: useStore(store, (s) => s.deleteSelection),
     setSelectedCanvasObjectId: useStore(
       store,
       (s) => s.setSelectedCanvasObjectId

@@ -54,7 +54,12 @@ export class CanvasSync {
   syncToLocal = () => {
     this.yarray.observeDeep(() => {
       const state = this.canvasStore.getState();
-      state.setCanvasObjects(this.yarray.toArray().map(this.mapCanvasObject));
+      state.setCanvasObjects(
+        this.yarray
+          .toArray()
+          .map(this.mapCanvasObject)
+          .sort((a, b) => b.z - a.z)
+      );
     });
 
     this.ycanvas.observeDeep(() => {
@@ -101,9 +106,9 @@ export class CanvasSync {
     const yCanvasObject = this.yarray
       .toArray()
       .find((yobject) => yobject.get("id") == object.id);
-    yCanvasObject?.forEach((value, key) => {
-      if (object[key as keyof CanvasObject] !== value) {
-        yCanvasObject.set(key, object[key as keyof CanvasObject]);
+    Object.keys(object).forEach((key) => {
+      if (object[key as keyof CanvasObject] !== yCanvasObject?.get(key)) {
+        yCanvasObject?.set(key, object[key as keyof CanvasObject]);
       }
     });
   };
@@ -122,17 +127,38 @@ export class CanvasSync {
     ]);
   };
 
-  syncDeleteToYjs = (canvasObjectId: string) => {
-    const index = this.yarray
-      .toArray()
-      .findIndex((yobject) => yobject.get("id") == canvasObjectId);
-    if (index !== -1) {
-      this.yarray.delete(index, 1);
-    }
+  syncDeleteToYjs = (children: HierarchyItem[]) => {
+    children.forEach((node) => {
+      const index = this.yarray
+        .toArray()
+        .findIndex((yobject) => yobject.get("id") == node.id);
+      if (index !== -1) {
+        this.yarray.delete(index, 1);
+      }
+    });
+
+    children.forEach((node) => {
+      const ymap = this.getParentYMap(this.yhierarchy, node.id);
+      if (ymap) {
+        const children = ymap.get("children") as Y.Array<Y.Map<any>>;
+        const index = children
+          .toArray()
+          .findIndex((child) => child.get("id") == node.id);
+        children.delete(index, 1);
+      }
+      if (ymap == null) {
+        const index = this.yhierarchy
+          .toArray()
+          .findIndex((child) => child.get("id") == node.id);
+        if (index != -1) {
+          this.yhierarchy.delete(index, 1);
+        }
+      }
+    });
 
     const hierarchyIndex = this.yhierarchy
       .toArray()
-      .findIndex((node) => node.get("id") == canvasObjectId);
+      .findIndex((node) => node.get("id") == children[0].id);
     if (hierarchyIndex !== -1) {
       this.yhierarchy.delete(hierarchyIndex, 1);
     }
@@ -173,6 +199,30 @@ export class CanvasSync {
       this.yhierarchy.delete(0, this.yhierarchy.length);
       this.yhierarchy.insert(0, hierarchyItems);
     }
+  };
+
+  private getParentYMap = (
+    yhierarchy: Y.Array<Y.Map<any>>,
+    id: string,
+    parent: Y.Map<any> | null = null
+  ): Y.Map<any> | null => {
+    for (const child of yhierarchy.toArray()) {
+      if (id == child.get("id")) {
+        return parent;
+      }
+      const children = child.get("children") as Y.Array<Y.Map<any>>;
+
+      if (children.length > 0) {
+        parent = child;
+        const result = this.getParentYMap(children, id, parent);
+        if (result != null) {
+          return result;
+        }
+      }
+      parent = null;
+    }
+
+    return parent;
   };
 
   private mapCanvasObject = (y: Y.Map<any>): CanvasObject => {
@@ -226,6 +276,7 @@ export class CanvasSync {
     yCanvasObject.set("id", object.id);
     yCanvasObject.set("x", object.x);
     yCanvasObject.set("y", object.y);
+    yCanvasObject.set("z", object.z);
     yCanvasObject.set("width", object.width);
     yCanvasObject.set("height", object.height);
     yCanvasObject.set("rotation", object.rotation);
