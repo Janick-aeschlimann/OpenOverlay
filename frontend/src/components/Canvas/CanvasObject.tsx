@@ -17,8 +17,13 @@ const CanvasObjectComponent: React.FC<ICanvasObjectProps> = (props) => {
   const minWidth = 100;
   const minHeight = 100;
 
-  const { connection, selectedCanvasObjectId, setSelectedCanvasObjectId } =
-    useCanvasStore(props.overlayId);
+  const {
+    connection,
+    selectedCanvasObjectId,
+    nestedSelectedCanvasObjectIds,
+    setSelectedCanvasObjectId,
+    updateCanvasObjectProps,
+  } = useCanvasStore(props.overlayId);
 
   const handleMouseMove = (event: MouseEvent) => {
     if (lastPos.current) {
@@ -258,22 +263,32 @@ const CanvasObjectComponent: React.FC<ICanvasObjectProps> = (props) => {
           className="absolute h-full z-10 w-full border-3 border-transparent rounded-md pointer-events-none "
           style={{
             borderColor:
-              selectedCanvasObjectId == props.object.id ? "#0080FF" : "",
+              selectedCanvasObjectId == props.object.id
+                ? "#0080FF"
+                : nestedSelectedCanvasObjectIds.includes(props.object.id)
+                ? "#054466"
+                : "",
           }}
         ></div>
-
         <div
           className="absolute w-full h-full hover:cursor-move overflow-hidden"
           onMouseDown={handleMouseDown}
           onMouseUp={handleMouseUp}
           style={{
-            borderRadius: selectedCanvasObjectId == props.object.id ? 8 : 0,
+            borderRadius:
+              selectedCanvasObjectId == props.object.id ||
+              nestedSelectedCanvasObjectIds.includes(props.object.id)
+                ? 8
+                : 0,
           }}
         >
           {Renderer && (
             <Renderer
               obj={props.object}
               transform={{ scale: props.canvasTransform.scale }}
+              onChange={(newValues) => {
+                updateCanvasObjectProps(props.object.id, newValues);
+              }}
             />
           )}
         </div>

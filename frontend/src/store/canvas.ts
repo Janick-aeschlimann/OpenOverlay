@@ -72,6 +72,7 @@ export interface CanvasStore {
   canvasObjects: CanvasObject[];
   hierarchy: HierarchyItem;
   selectedCanvasObjectId: string | null;
+  nestedSelectedCanvasObjectIds: string[];
   canvasTransform: CanvasTransform;
   presence: Presence;
   canvasDraft: CanvasDraft | null;
@@ -114,6 +115,7 @@ export const createCanvasStore = (overlayId: number) =>
         canvasObjects: [],
         hierarchy: { id: "root", name: "root", children: [] },
         selectedCanvasObjectId: null,
+        nestedSelectedCanvasObjectIds: [],
         canvasTransform: {
           offsetX: 0,
           offsetY: 0,
@@ -213,7 +215,10 @@ export const createCanvasStore = (overlayId: number) =>
         addCanvasObject: (newObject) => {
           const connection = get().connection;
           if (connection.connected && connection.canvasSync) {
-            const id = crypto.randomUUID();
+            const id = generateNameForObjectOfType(
+              get().canvasObjects,
+              newObject
+            );
             const object = { ...newObject, id: id };
             const hierarchyItem: HierarchyItem = { id: id, name: id };
 
@@ -254,8 +259,23 @@ export const createCanvasStore = (overlayId: number) =>
             }
           }
         },
-        setSelectedCanvasObjectId: (canvasObjectId) =>
-          set({ selectedCanvasObjectId: canvasObjectId }),
+        setSelectedCanvasObjectId: (canvasObjectId) => {
+          set({ selectedCanvasObjectId: canvasObjectId });
+          if (canvasObjectId == null) {
+            set({ nestedSelectedCanvasObjectIds: [] });
+          } else {
+            const { node } = findNodeAndParent(get().hierarchy, canvasObjectId);
+            if (node) {
+              const children = getAllChildrenNodes(node);
+              set({
+                nestedSelectedCanvasObjectIds: children.map(
+                  (child) => child.id
+                ),
+              });
+              console.log(get().nestedSelectedCanvasObjectIds);
+            }
+          }
+        },
         setCanvasTransform: (transform) => {
           set({ canvasTransform: transform });
         },
@@ -303,7 +323,6 @@ export const createCanvasStore = (overlayId: number) =>
         },
         updateDepthValues: () => {
           const zValues = getZPosition(get().hierarchy.children ?? []);
-
           set((state) => ({
             canvasObjects: state.canvasObjects
               .map((object) => ({
@@ -312,6 +331,8 @@ export const createCanvasStore = (overlayId: number) =>
               }))
               .sort((a, b) => b.z - a.z),
           }));
+
+          get().connection.canvasSync?.syncDepthValuesToYjs(zValues);
         },
         moveHierarchyItem: (
           sourceId: string,
@@ -373,6 +394,29 @@ export const createCanvasStore = (overlayId: number) =>
       }
     )
   );
+
+const generateNameForObjectOfType = (
+  objects: CanvasObject[],
+  object: CanvasObject
+): string => {
+  const type = object.type;
+
+  let i = 0;
+
+  while (i < 20) {
+    const id =
+      type.substring(0, 1).toUpperCase() +
+      type.substring(1) +
+      (i > 0 ? ` (${i})` : "");
+    console.log(id);
+
+    if (!objects.find((obj) => obj.id == id)) {
+      return id;
+    }
+    i++;
+  }
+  return crypto.randomUUID();
+};
 
 const getZPosition = (
   nodes: HierarchyItem[],
@@ -462,6 +506,10 @@ export const useCanvasStore = (overlayId: number) => {
     canvasObjects: useStore(store, (s) => s.canvasObjects),
     hierarchy: useStore(store, (s) => s.hierarchy),
     selectedCanvasObjectId: useStore(store, (s) => s.selectedCanvasObjectId),
+    nestedSelectedCanvasObjectIds: useStore(
+      store,
+      (s) => s.nestedSelectedCanvasObjectIds
+    ),
     canvasTransform: useStore(store, (s) => s.canvasTransform),
     presence: useStore(store, (s) => s.presence),
     canvasDraft: useStore(store, (s) => s.canvasDraft),

@@ -27,7 +27,7 @@ const fontFamilies = [
 ];
 
 export const TextComponent: ComponentDefinition = {
-  render: ({ obj, transform }) => {
+  render: ({ obj, transform, onChange }) => {
     return (
       <div
         style={{
@@ -38,9 +38,24 @@ export const TextComponent: ComponentDefinition = {
           fontWeight: obj.props?.fontWeight,
           fontFamily: obj.props?.fontFamily,
           color: obj.props?.color,
+          padding: "10px",
         }}
       >
-        <p>{obj.props?.text}</p>
+        <textarea
+          style={{
+            maxWidth: "100%",
+            resize: "none",
+            width: "100%",
+            height: "100%",
+            outline: "none",
+            border: "none",
+            overflow: "hidden",
+          }}
+          onChange={(e) => {
+            onChange?.({ text: e.target.value });
+          }}
+          value={obj.props?.text}
+        ></textarea>
       </div>
     );
   },
@@ -125,7 +140,7 @@ export const TextComponent: ComponentDefinition = {
   ),
   defaultProps: {
     text: "Text",
-    fontSize: 16,
+    fontSize: 32,
     fontWeight: "400",
     fontFamily: "Roboto, sans-serif",
     color: "#ffffff",

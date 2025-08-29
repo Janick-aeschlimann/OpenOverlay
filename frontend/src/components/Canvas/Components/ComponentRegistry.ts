@@ -10,6 +10,7 @@ export interface ComponentDefinition {
   render: (props: {
     obj: CanvasObject;
     transform: { scale: number };
+    onChange?: (newValues: any) => void;
   }) => ReactNode;
   editor: React.FC<{ props: any; onChange: (newProps: any) => void }>;
   defaultProps: any;

@@ -113,6 +113,17 @@ export class CanvasSync {
     });
   };
 
+  syncDepthValuesToYjs = (nodes: { id: string; z: number }[]) => {
+    nodes.forEach((node) => {
+      const object = this.yarray
+        .toArray()
+        .find((obj) => obj.get("id") == node.id);
+      if (object) {
+        object.set("z", node.z);
+      }
+    });
+  };
+
   syncNewToYjs = (object: CanvasObject) => {
     const yCanvasObject = this.yarray
       .toArray()
@@ -272,7 +283,7 @@ export class CanvasSync {
 
   private mapYCanvasObject = (object: CanvasObject): Y.Map<any> => {
     const yCanvasObject = new Y.Map<any>();
-
+    console.log(object.z);
     yCanvasObject.set("id", object.id);
     yCanvasObject.set("x", object.x);
     yCanvasObject.set("y", object.y);

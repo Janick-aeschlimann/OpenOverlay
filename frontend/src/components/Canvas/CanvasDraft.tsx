@@ -23,7 +23,7 @@ const CanvasDraftComponent: React.FC<ICanvasDraftComponentProps> = (props) => {
             (props.canvasDraft?.height || 0) * props.canvasTransform.scale,
         }}
       >
-        <div className="w-full h-full">
+        <div className="w-full h-full bg-neutral-900/50 rounded-md">
           {props.canvasDraft &&
             (() => {
               const Render = componentRegistry[props.canvasDraft?.type].render;
