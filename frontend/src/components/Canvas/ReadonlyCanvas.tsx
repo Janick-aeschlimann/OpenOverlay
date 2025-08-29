@@ -88,9 +88,19 @@ const ReadonlyCanvas: React.FC = () => {
 
     yarray.observeDeep(() => {
       if (scene == 1) {
-        setObjects1(yarray.toArray().map(mapCanvasObject));
+        setObjects1(
+          yarray
+            .toArray()
+            .map(mapCanvasObject)
+            .sort((a, b) => b.z - a.z)
+        );
       } else {
-        setObjects2(yarray.toArray().map(mapCanvasObject));
+        setObjects2(
+          yarray
+            .toArray()
+            .map(mapCanvasObject)
+            .sort((a, b) => b.z - a.z)
+        );
       }
     });
   };
