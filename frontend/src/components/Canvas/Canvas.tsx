@@ -33,6 +33,8 @@ const Canvas: React.FC<ICanvasProps> = (props) => {
     setPresence,
     setSelectedCanvasObjectId,
     moveSelection,
+    copySelectionToClipboard,
+    pasteClipboard,
   } = useCanvasStore(overlayId);
 
   const canvasStore = getCanvasStore(overlayId);
@@ -54,6 +56,13 @@ const Canvas: React.FC<ICanvasProps> = (props) => {
           } else {
             canvasSync.undoManager.undo();
           }
+        }
+
+        if (event.key == "c" && event.ctrlKey) {
+          copySelectionToClipboard();
+        }
+        if (event.key == "v" && event.ctrlKey) {
+          pasteClipboard();
         }
       });
     };

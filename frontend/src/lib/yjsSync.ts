@@ -28,7 +28,9 @@ export class CanvasSync {
     this.yarray = ydoc.getArray<Y.Map<any>>("objects");
     this.ycanvas = ydoc.getMap<Y.Map<any>>("canvas");
     this.yhierarchy = ydoc.getArray<Y.Map<any>>("Hierarchy");
-    this.undoManager = new Y.UndoManager(this.yarray, { captureTimeout: 1000 });
+    this.undoManager = new Y.UndoManager([this.yarray, this.yhierarchy], {
+      captureTimeout: 1000,
+    });
     this.canvasStore = canvasStore;
 
     const state = this.canvasStore.getState();

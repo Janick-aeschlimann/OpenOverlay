@@ -38,7 +38,7 @@ export const TextComponent: ComponentDefinition = {
           fontWeight: obj.props?.fontWeight,
           fontFamily: obj.props?.fontFamily,
           color: obj.props?.color,
-          padding: "10px",
+          padding: transform.scale * 15 + "px",
         }}
       >
         <textarea

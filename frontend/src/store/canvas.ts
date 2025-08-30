@@ -77,13 +77,14 @@ export interface CanvasStore {
   presence: Presence;
   canvasDraft: CanvasDraft | null;
   clients: Client[];
+  clipboard: CanvasObject[];
   connectYjs: (overlayId: number) => Promise<CanvasSync>;
   setCanvas: (canvas: Canvas) => void;
   updateCanvas: (canvas: Canvas) => void;
   setCanvasObjects: (objects: CanvasObject[]) => void;
   updateCanvasObject: (id: string, newObject: Partial<CanvasObject>) => void;
   updateCanvasObjectProps: (id: string, props: any) => void;
-  addCanvasObject: (newObject: CanvasObject) => void;
+  addCanvasObject: (newObject: CanvasObject) => string | null;
   deleteSelection: () => void;
   setSelectedCanvasObjectId: (canvasObjectId: string | null) => void;
   setCanvasTransform: (transform: CanvasTransform) => void;
@@ -100,6 +101,8 @@ export interface CanvasStore {
     targetIndex: number
   ) => void;
   moveSelection: (dx: number, dy: number) => void;
+  copySelectionToClipboard: () => void;
+  pasteClipboard: () => void;
 }
 
 export const createCanvasStore = (overlayId: number) =>
@@ -134,6 +137,7 @@ export const createCanvasStore = (overlayId: number) =>
         },
         canvasDraft: null,
         clients: [],
+        clipboard: [],
         connectYjs: async (overlayId) => {
           const canvasSync = await CanvasSync.create(overlayId);
           canvasSync.syncToLocal();
@@ -231,7 +235,10 @@ export const createCanvasStore = (overlayId: number) =>
             }));
 
             connection.canvasSync.syncNewToYjs(object);
+
+            return id;
           }
+          return null;
         },
         deleteSelection: () => {
           const connection = get().connection;
@@ -382,6 +389,51 @@ export const createCanvasStore = (overlayId: number) =>
                 });
               }
             }
+          }
+        },
+        copySelectionToClipboard: () => {
+          const selectedCanvasObjectId = get().selectedCanvasObjectId;
+          const nestedSelectedCanvasObjectIds =
+            get().nestedSelectedCanvasObjectIds;
+          if (selectedCanvasObjectId) {
+            const canvasObjects = get().canvasObjects;
+            const object = canvasObjects.find(
+              (obj) => obj.id == selectedCanvasObjectId
+            );
+            const nestedObjects = nestedSelectedCanvasObjectIds
+              .map((id) => canvasObjects.find((obj) => obj.id == id))
+              .filter((val) => val != undefined);
+            if (object) {
+              set({ clipboard: [object, ...nestedObjects] });
+            }
+          }
+        },
+        pasteClipboard: () => {
+          const clipboardObjects = get().clipboard;
+
+          if (clipboardObjects.length > 0) {
+            const presence = get().presence;
+
+            const pasteObject: CanvasObject = {
+              ...clipboardObjects[0],
+              x: presence.cursor.x - clipboardObjects[0].width / 2,
+              y: presence.cursor.y - clipboardObjects[0].height / 2,
+            };
+
+            const nestedPaseObjects: CanvasObject[] = clipboardObjects
+              .slice(1)
+              .map((obj) => ({
+                ...obj,
+                x: pasteObject.x + (obj.x - clipboardObjects[0].x),
+                y: pasteObject.y + (obj.y - clipboardObjects[0].y),
+              }));
+
+            const id = get().addCanvasObject(pasteObject);
+            for (const object of nestedPaseObjects) {
+              get().addCanvasObject(object);
+            }
+
+            get().setSelectedCanvasObjectId(id);
           }
         },
       }),
@@ -535,6 +587,11 @@ export const useCanvasStore = (overlayId: number) => {
     setHierarchy: useStore(store, (s) => s.setHierarchy),
     moveHierarchyItem: useStore(store, (s) => s.moveHierarchyItem),
     moveSelection: useStore(store, (s) => s.moveSelection),
+    copySelectionToClipboard: useStore(
+      store,
+      (s) => s.copySelectionToClipboard
+    ),
+    pasteClipboard: useStore(store, (s) => s.pasteClipboard),
   };
 };
 
