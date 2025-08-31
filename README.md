@@ -107,3 +107,8 @@ Run ```docker compose down``` to stop the server.
 📖 How To Use?
 ---
 Coming soon...
+
+🧠 AI used in this Project
+---
+#### Most of The Code I wrote myself
+For this Project I challenged myself to write as much as I could myself. Most of the code isn't optimised and the app runs with much overhead. I made use of AI to learn the technologies I needed for this Project. In some cases when I didnt know how to solve a specific problem I asked AI for inspiration or a solution.
