@@ -46,10 +46,10 @@ To Get Your Project up and running you have to copy following templates to the g
 #### ⚙️ /backend/.env
 ```env
 # Backend Port
-PORT=3001
+PORT=7001
 
-API_URL=http://localhost:3001
-FRONTEND_URL=https://localhost:3000
+API_URL=http://localhost:7001
+FRONTEND_URL=https://localhost:7000
 
 # Database
 DB_HOST="db"
@@ -74,8 +74,8 @@ MYSQL_CONNECTION_URI="mysql://dev:password@db:3306/supertokens"
 
 #### ⚙️ /frontend/.env
 ```env
-VITE_API_URL=http://localhost:3001
-VITE_WS_URL=ws://localhost:3002
+VITE_API_URL=http://localhost:7001
+VITE_WS_URL=ws://localhost:7002
 ```
 
 ### Configure Docker Compose Ports
