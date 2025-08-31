@@ -3,10 +3,19 @@ import CreateCanvasObjectModal from "@/components/Canvas/CreateCanvasObjectModal
 import Hierarchy from "@/components/Canvas/Hierarchy";
 import Properties from "@/components/Canvas/Properties";
 import Toolbar from "@/components/Canvas/Toolbar";
+import { Button } from "@/components/shadcn/ui/button";
 import { Input } from "@/components/shadcn/ui/input";
 import { useCanvasStore } from "@/store/canvas";
 import { useUserStore } from "@/store/user";
-import { ArrowLeft, Network, Plus, Redo2, Undo2, User2 } from "lucide-react";
+import {
+  ArrowLeft,
+  ExternalLink,
+  Network,
+  Plus,
+  Redo2,
+  Undo2,
+  User2,
+} from "lucide-react";
 import { useState, type ChangeEvent } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -85,7 +94,17 @@ const OverlayEditor: React.FC = () => {
               <Network className="h-5 w-5 text-white" />
             </div>
           </div>
-          <div className="flex flex-row gap-3">
+          <div className="flex flex-row gap-4">
+            <Button variant="secondary">
+              <a
+                href="/preview"
+                target="_blank"
+                className="flex flex-row gap-2 items-center"
+              >
+                Open Preview
+                <ExternalLink />
+              </a>
+            </Button>
             <Input
               type="number"
               placeholder="Width"
