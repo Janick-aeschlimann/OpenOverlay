@@ -1,5 +1,4 @@
 import { useEffect, useRef } from "react";
-import { useParams } from "react-router-dom";
 import CanvasObjectComponent from "@/components/Canvas/CanvasObject";
 import { getCanvasStore, useCanvasStore } from "@/store/canvas";
 import type { CanvasDraft, CanvasObject } from "@/types/types";
@@ -13,7 +12,7 @@ export interface ICanvasProps {
 }
 
 const Canvas: React.FC<ICanvasProps> = (props) => {
-  const overlayId = parseInt(useParams().id!);
+  const overlayId = 0;
 
   const {
     connection,
@@ -300,7 +299,7 @@ const Canvas: React.FC<ICanvasProps> = (props) => {
           onMouseDown={creatorMouseDown}
         ></div>
         {clients.map((client, index) => {
-          if (client.userId && client.username && client.color) {
+          if (client.username && client.color) {
             return (
               <CanvasClient
                 key={index}

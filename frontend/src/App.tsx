@@ -1,174 +1,156 @@
-import { Navigate, Route, Routes } from "react-router-dom";
-
+import { useState } from "react";
+import { Button } from "./components/shadcn/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "./components/shadcn/ui/dialog";
+import { Input } from "./components/shadcn/ui/input";
+import { Label } from "./components/shadcn/ui/label";
 import { ThemeProvider } from "./components/ThemeProvider";
-import LoginPage from "./pages/auth/LoginPage";
-import SignUpPage from "./pages/auth/SignUpPage";
-
-import Session from "supertokens-web-js/recipe/session";
-import { useEffect } from "react";
-import GoogleCallback from "./pages/auth/callback/GoogleCallback";
-import DefaultWrapper from "./components/PageWrapper/DefaultWrapper";
-import CreateUserPage from "./pages/auth/CreateUserPage";
-import ProtectedRoute from "./components/Navigation/ProtectedRoute";
-import Sidebar from "./components/Navigation/Sidebar";
-import Dashboard from "./pages/main/DashboardPage";
-import Workspaces from "./pages/main/WorkspacesPage";
-import WorkspaceOverview from "./pages/workspace/WorkspaceOverviewPage";
-import CreateWorkspace from "./pages/workspace/CreateWorkspacePage";
 import OverlayEditor from "./pages/Editor/OverlayEditorPage";
-import CreateRenderSource from "./pages/workspace/CreateRenderSourcePage";
-import { useWorkspaceStore } from "./store/workspace";
-import AuthWrapper from "./components/PageWrapper/AuthWrapper";
-import CreateOverlay from "./pages/workspace/CreateOverlayPage";
-import ReadonlyCanvas from "./components/Canvas/ReadonlyCanvas";
-import EditRenderSource from "./pages/workspace/EditRenderSourcePage";
-import Members from "./pages/workspace/MemersPage";
-import InvitePage from "./pages/InvitePage";
+import { useUserStore } from "./store/user";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./components/shadcn/ui/select";
+import {
+  uniqueNamesGenerator,
+  adjectives,
+  colors,
+  animals,
+} from "unique-names-generator";
+
+const userColors = [
+  "#30bced",
+  "#6eeb83",
+  "#ffbc42",
+  "#ecd444",
+  "#ee6352",
+  "#9ac2c9",
+  "#8acb88",
+  "#1be7ff",
+];
+
+const getRandomColor = () => {
+  const index = Math.floor(Math.random() * userColors.length);
+  return userColors[index];
+};
 
 function App() {
-  const { fetchWorkspaces, setWorkspaceSlug, getLastWorkspace } =
-    useWorkspaceStore();
+  const { user, editUser, setEditUser, setUser } = useUserStore();
 
-  useEffect(() => {
-    const initWorkspace = async () => {
-      if (await Session.doesSessionExist()) {
-        await fetchWorkspaces();
-        if (location.pathname.startsWith("/workspace/")) {
-          setWorkspaceSlug(location.pathname.split("/")[2]);
-        } else {
-          getLastWorkspace();
-        }
-      }
-    };
-    initWorkspace();
-  }, []);
+  const [isValid, setIsValid] = useState<boolean>(true);
+  const [color, setColor] = useState<string>(user?.color ?? getRandomColor());
 
   return (
     <>
-      <AuthWrapper>
-        <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
-          <Routes>
-            {/* NavbarWrapper */}
-            <Route path="/" element={<Navigate to={"/dashboard"} />} />
-            <Route
-              path="/dashboard"
-              element={
-                <Sidebar title="Dashboard">
-                  <ProtectedRoute>
-                    <Dashboard />
-                  </ProtectedRoute>
-                </Sidebar>
-              }
-            />
-            <Route
-              path="/workspaces"
-              element={
-                <Sidebar title="Workspaces">
-                  <ProtectedRoute>
-                    <Workspaces />
-                  </ProtectedRoute>
-                </Sidebar>
-              }
-            />
-            <Route
-              path="/workspace/:slug"
-              element={
-                <Sidebar title="Workspace Overview">
-                  <ProtectedRoute>
-                    <WorkspaceOverview />
-                  </ProtectedRoute>
-                </Sidebar>
-              }
-            />
-            <Route
-              path="/workspace/:slug/rendersource/:renderSourceId"
-              element={
-                <Sidebar title="Render Source">
-                  <ProtectedRoute>
-                    <EditRenderSource />
-                  </ProtectedRoute>
-                </Sidebar>
-              }
-            />
-            <Route
-              path="/workspace/:slug/members"
-              element={
-                <Sidebar title="Members">
-                  <ProtectedRoute>
-                    <Members />
-                  </ProtectedRoute>
-                </Sidebar>
-              }
-            />
+      <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+        <div className="min-h-dvh h-dvh max-h-dvh relative overflow-hidden">
+          <OverlayEditor />
+          {
+            <Dialog
+              open={user == null || editUser}
+              onOpenChange={(open) => {
+                if (!open) {
+                  setEditUser(false);
+                }
+              }}
+            >
+              <form>
+                <DialogContent className="sm:max-w-[425px]">
+                  <DialogHeader>
+                    <DialogTitle>Set User Profile</DialogTitle>
+                    <DialogDescription>
+                      Choose a username and a color which is visible to all
+                      other visitors on this demo.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="grid gap-4">
+                    <div className="grid gap-3">
+                      <Label htmlFor="username">Username</Label>
+                      <Input
+                        id="username"
+                        name="username"
+                        required
+                        defaultValue={
+                          user?.username ??
+                          uniqueNamesGenerator({
+                            dictionaries: [adjectives, colors, animals],
+                            separator: " ",
+                            style: "capital",
+                            length: 2,
+                          })
+                        }
+                        onChange={(e) => {
+                          if (e.target.value) {
+                            setIsValid(true);
+                          } else {
+                            setIsValid(false);
+                          }
+                        }}
+                      />
+                    </div>
 
-            {/* DefaultWrapper */}
-            <Route element={<DefaultWrapper />}>
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/signup" element={<SignUpPage />} />
-              <Route
-                path="/auth/callback/google"
-                element={<GoogleCallback />}
-              />
-              <Route
-                path="/auth/user/create"
-                element={
-                  <ProtectedRoute>
-                    <CreateUserPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/workspace/new"
-                element={
-                  <ProtectedRoute>
-                    <CreateWorkspace />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/workspace/:slug/rendersource/new"
-                element={
-                  <ProtectedRoute>
-                    <CreateRenderSource />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/workspace/:slug/overlay/new"
-                element={
-                  <ProtectedRoute>
-                    <CreateOverlay />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/workspace/:slug/overlay/:id"
-                element={
-                  <ProtectedRoute>
-                    <OverlayEditor />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/preview/:token"
-                element={
-                  <div className="bg-white">
-                    <ReadonlyCanvas />
+                    <div className="grid gap-3">
+                      <Label htmlFor="color">Color</Label>
+
+                      <Select
+                        onValueChange={(value) => setColor(value)}
+                        value={color}
+                      >
+                        <SelectTrigger className="w-[180px]">
+                          <SelectValue placeholder="Theme" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {userColors.map((color) => (
+                            <SelectItem key={color} value={color}>
+                              <div
+                                style={{
+                                  backgroundColor: color,
+                                  width: 15,
+                                  height: 15,
+                                  borderRadius: 5,
+                                }}
+                              ></div>
+                              {color}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
-                }
-              />
-              <Route
-                path="/invite/:token"
-                element={
-                  <ProtectedRoute>
-                    <InvitePage />
-                  </ProtectedRoute>
-                }
-              />
-            </Route>
-          </Routes>
-        </ThemeProvider>
-      </AuthWrapper>
+                  <DialogFooter>
+                    <Button
+                      type="submit"
+                      disabled={!isValid}
+                      onClick={() => {
+                        const username = (
+                          document.getElementById(
+                            "username"
+                          ) as HTMLInputElement
+                        ).value;
+                        if (username && color) {
+                          setUser({ username, color });
+                          setEditUser(false);
+                        }
+                      }}
+                    >
+                      Save changes
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </form>
+            </Dialog>
+          }
+        </div>
+      </ThemeProvider>
     </>
   );
 }

@@ -5,20 +5,23 @@ import Properties from "@/components/Canvas/Properties";
 import Toolbar from "@/components/Canvas/Toolbar";
 import { Input } from "@/components/shadcn/ui/input";
 import { useCanvasStore } from "@/store/canvas";
-import { ArrowLeft, Network, Plus, Redo2, Undo2 } from "lucide-react";
+import { useUserStore } from "@/store/user";
+import { ArrowLeft, Network, Plus, Redo2, Undo2, User2 } from "lucide-react";
 import { useState, type ChangeEvent } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 const OverlayEditor: React.FC = () => {
   const navigate = useNavigate();
 
-  const overlayId = parseInt(useParams().id!);
+  const overlayId = 0;
 
   const { canvas, connection, updateCanvas } = useCanvasStore(overlayId);
 
   const [modalOpen, setModalOpen] = useState(false);
 
   const [hierarchyOpen, setHierarchyOpen] = useState<boolean>(true);
+
+  const { setEditUser } = useUserStore();
 
   return (
     <>
@@ -107,6 +110,14 @@ const OverlayEditor: React.FC = () => {
                 })
               }
             ></Input>
+            <div
+              className="cursor-pointer hover:bg-[#3f3f3f] p-2 rounded-xl"
+              onClick={() => {
+                setEditUser(true);
+              }}
+            >
+              <User2 className="h-6 w-6 text-white" />
+            </div>
           </div>
         </div>
         <div className="flex flex-row h-full">

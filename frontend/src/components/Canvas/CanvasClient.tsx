@@ -35,7 +35,7 @@ const CanvasClient: React.FC<ICanvasClientProps> = (props) => {
           className="absolute left-5 rounded-lg flex items-center justify-center px-2 font-medium"
           style={{ backgroundColor: props.client.color! }}
         >
-          <p className="text-white">{props.client.username!}</p>
+          <p className="text-white text-nowrap">{props.client.username!}</p>
         </div>
       </div>
     </>

@@ -49,65 +49,15 @@ export const createYWebsocketServer = async ({
     app,
     "/:room",
     store,
-    async (req) => {
-      const room = req.getParameter(0);
-      const headerWsProtocol = req.getHeader("sec-websocket-protocol");
-      const [, , token] = /(^|,)yauth-(((?!,).)*)/.exec(headerWsProtocol) ?? [
-        null,
-        null,
-        req.getQuery("yauth"),
-      ];
-      if (token == null) {
-        throw new Error("Missing Token");
-      }
-      // verify that the user has a valid token
-      const { payload: userToken } = await jwtVerify(token, JWKS);
-      if (userToken.sub == null) {
-        throw new Error("Missing userid in user token!");
-      }
-      const permUrl = new URL(`${room}/${userToken.sub}`, checkPermCallbackUrl);
-      try {
-        const perm = await fetch(permUrl).then((req) => req.json());
-        return {
-          hasWriteAccess: perm.yaccess === "rw",
-          room,
-          userid: perm.yuserid || "",
-        };
-      } catch (e) {
-        console.error("Failed to pull permissions from", { permUrl });
-        throw e;
-      }
+    async () => {
+      return {
+        hasWriteAccess: true,
+        room: "0",
+        userid: crypto.randomUUID(),
+      };
     },
     async (req) => {
-      const room = req.getParameter(0);
-      const headerWsProtocol = req.getHeader("sec-websocket-protocol");
-      const [, , token] = /(^|,)token-(((?!,).)*)/.exec(headerWsProtocol) ?? [
-        null,
-        null,
-        req.getQuery("token"),
-      ];
-      if (token == null) {
-        throw new Error("Missing Token");
-      }
-      try {
-        const response = await fetch(
-          `http://backend:7001/api/rendersource/token/${token}`
-        );
-
-        if (response.ok) {
-          const renderSource = await response.json();
-          if (renderSource.overlayId == parseInt(room)) {
-            return { room: room, renderSourceId: renderSource.renderSourceId };
-          } else {
-            throw new Error("Forbidden");
-          }
-        } else {
-          throw new Error("Invalid Token");
-        }
-      } catch (e) {
-        console.error("Failed to pull renderSource");
-        throw e;
-      }
+      return { room: "0", renderSourceId: 0 };
     },
     { redisPrefix, initDocCallback }
   );

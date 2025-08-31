@@ -5,9 +5,8 @@ import {
 } from "@/store/canvas";
 import type { Canvas, CanvasObject, HierarchyItem } from "@/types/types";
 import { WebsocketProvider } from "y-websocket";
-import Session from "supertokens-web-js/recipe/session";
 import * as Y from "yjs";
-import { useAuthStore } from "@/store/auth";
+import { useUserStore } from "@/store/user";
 
 export class CanvasSync {
   public provider: WebsocketProvider;
@@ -38,14 +37,12 @@ export class CanvasSync {
   }
 
   static async create(canvasId: number): Promise<CanvasSync> {
-    const accessToken = (await Session.getAccessToken()) || "";
     const ydoc = new Y.Doc();
 
     const provider = new WebsocketProvider(
       `${import.meta.env.VITE_WS_URL}/overlay`,
       `${canvasId}`,
-      ydoc,
-      { params: { yauth: accessToken } }
+      ydoc
     );
 
     const canvasStore = getCanvasStore(canvasId);
@@ -186,14 +183,12 @@ export class CanvasSync {
   };
 
   syncUserToYjs = () => {
-    const user = useAuthStore.getState().user;
-    const state = this.canvasStore.getState();
+    const user = useUserStore.getState().user;
 
     if (user) {
       this.provider.awareness.setLocalStateField("user", {
-        userId: user.userId,
         username: user.username,
-        color: state.presence.color,
+        color: user.color,
       });
     }
   };

@@ -1,13 +1,4 @@
 services:
-  backend:
-    build: ./backend
-    env_file: ./backend/.env
-    ports:
-      - "7001:7001"
-    restart: unless-stopped
-    volumes:
-      - ./data:/app/data
-
   frontend:
     build: ./frontend
     ports:
@@ -23,7 +14,6 @@ services:
     depends_on:
       - minio
       - redis
-      - backend
   yjs-worker:
     build: ./y-redis
     command: node ./bin/worker.js --no-colors
@@ -31,7 +21,6 @@ services:
     depends_on:
       - minio
       - redis
-      - backend
   redis:
     image: redis:alpine
   minio:
@@ -42,39 +31,6 @@ services:
     command: server /data --console-address :9001
     volumes:
       - ./data/doc-storage:/data
-
-  db:
-    image: mysql:latest
-    env_file: ./backend/.env
-    ports:
-      - 3306:3306
-    networks:
-      - app_network
-    restart: unless-stopped
-    volumes:
-      - ./data/db:/var/lib/mysql
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      timeout: 20s
-      retries: 10
-
-  supertokens:
-    image: registry.supertokens.io/supertokens/supertokens-mysql:10.1.4
-    depends_on:
-      db:
-        condition: service_healthy
-    ports:
-      - 3567:3567
-    env_file: ./backend/.env
-    networks:
-      - app_network
-    restart: unless-stopped
-    healthcheck:
-      test: >
-        bash -c 'exec 3<>/dev/tcp/127.0.0.1/3567 && echo -e "GET /hello HTTP/1.1\r\nhost: 127.0.0.1:3567\r\nConnection: close\r\n\r\n" >&3 && cat <&3 | grep "Hello"'
-      interval: 10s
-      timeout: 5s
-      retries: 5
 
 networks:
   app_network:

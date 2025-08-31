@@ -279,7 +279,6 @@ export const createCanvasStore = (overlayId: number) =>
                   (child) => child.id
                 ),
               });
-              console.log(get().nestedSelectedCanvasObjectIds);
             }
           }
         },
@@ -460,7 +459,6 @@ const generateNameForObjectOfType = (
       type.substring(0, 1).toUpperCase() +
       type.substring(1) +
       (i > 0 ? ` (${i})` : "");
-    console.log(id);
 
     if (!objects.find((obj) => obj.id == id)) {
       return id;
